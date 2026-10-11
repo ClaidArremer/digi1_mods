@@ -172,6 +172,12 @@ void digimono_rout(void)
         shed--;
 }
 
+/* The render's own stack (glue.s digimono_rblock): the engines' deepest calls take about 2 KB (MACRO's
+ * drums 1.9 KB), the rest is room for the interrupts above the render's level. */
+#define DIGIMONO_STACK 4096
+uint32_t digimono_stack[DIGIMONO_STACK / 4] __attribute__((aligned(16)));
+__asm__(".globl digimono_stack_top\n\t.set digimono_stack_top, digimono_stack + " "4096");
+
 void digimono_blocks(void)
 {
     int v;

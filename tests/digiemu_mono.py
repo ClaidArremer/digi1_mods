@@ -165,6 +165,7 @@ at(0, "rec", False)
 STEPS = t + 2
 
 st = {"n": 0, "rec": False, "state": None, "init": None, "ins": 0}
+PROBE = [int(x, 16) for x in os.environ["STACKPROBE"].split(":")] if os.environ.get("STACKPROBE") else None
 cost = []                                            # instructions in the mods' code, per render block
 blocks = []                                          # (start bit, note word, 8 SRC words, 32 samples)
 master = []
@@ -199,6 +200,35 @@ def mst(u, ad, s, d):
 
 def count(u, ad, s, d):
     st["ins"] += 1
+    if PROBE and PROBE[0] <= ad < PROBE[1]:         # STACKPROBE=lo:hi: the deepest stack code in lo..hi reaches
+        sp = u.reg_read(UC_M68K_REG_A7)
+        if sp < st.get("spmin", 1 << 32):
+            st["spmin"] = sp
+            st["spmin_pc"] = ad
+        if "sptop" not in st:
+            st["sptop"] = sp
+
+
+RP = [int(x, 16) for x in os.environ["RENDERPROBE"].split(":")] if os.environ.get("RENDERPROBE") else None
+rp = {"t": {}, "d": collections.defaultdict(list), "sr": collections.Counter(), "sp": collections.Counter()}
+
+
+def rprobe(u, ad, s_, d):                          # RENDERPROBE=rin:blocks:rout: DTIM0 at each, SR at blocks
+    from unicorn.m68k_const import UC_M68K_REG_SR
+    t = struct.unpack(">I", u.mem_read(0xFC07000C, 4))[0]
+    T = rp["t"]
+    if ad == RP[0]:
+        T.clear(); T["in"] = t
+    elif ad == RP[1]:
+        T["b"] = t
+        rp["sr"][u.reg_read(UC_M68K_REG_SR) & 0x0700] += 1
+        rp["sp"][u.reg_read(UC_M68K_REG_A7) & ~0xff] += 1
+    elif ad == AFTER:
+        T["a"] = t
+    elif ad == RP[2] and "in" in T and "b" in T and "a" in T and st["rec"]:
+        rp["d"]["in->blocks"].append((T["b"] - T["in"]) & 0xffffffff)
+        rp["d"]["blocks"].append((T["a"] - T["b"]) & 0xffffffff)
+        rp["d"]["after->out"].append((t - T["a"]) & 0xffffffff)
 
 
 _spin = G.spin
@@ -208,6 +238,9 @@ def spin(m, pc, *args, **kw):
         m.uc.hook_add(UC_HOOK_CODE, after, begin=AFTER, end=AFTER)
         m.uc.hook_add(UC_HOOK_CODE, mst, begin=MASTER, end=MASTER)
         m.uc.hook_add(UC_HOOK_CODE, count, begin=RUN0, end=RUN1)
+        if RP:
+            for adr in (RP[0], RP[1], RP[2], AFTER):
+                m.uc.hook_add(UC_HOOK_CODE, rprobe, begin=adr, end=adr)
     for when, act in PLAN:
         if when != n:
             continue
@@ -227,6 +260,14 @@ def spin(m, pc, *args, **kw):
     st["n"] += 1
     r = _spin(m, pc, *args, **kw)
     if st["n"] >= STEPS:
+        if os.environ.get("STACKDUMP") and "sd" not in st:     # STACKDUMP=addr:len: memory saved at the end
+            sa, sl = [int(x, 16) for x in os.environ["STACKDUMP"].split(":")]
+            open("/tmp/claude-0/stackdump.bin", "wb").write(bytes(m.uc.mem_read(sa, sl)))
+            st["sd"] = 1
+        if PROBE and "spmin" in st and "dumped" not in st:
+            lo = (st["spmin"] - 0x8000) & ~3
+            open("/tmp/claude-0/stackmem.bin", "wb").write(struct.pack(">I", lo) + bytes(m.uc.mem_read(lo, 0x9000)))
+            st["dumped"] = 1
         E.stop_flag.set()
     return r
 G.spin = spin
@@ -237,6 +278,14 @@ E = G.Emulator(SNAP, syx=os.environ["DT2_SYX"], realtime=False, audio=True)
 E.run()
 if os.environ.get("OVSYM"):
     print("  overloads counted by the guard:", st.get("ov"))
+if RP:
+    for k, v in rp["d"].items():
+        v = sorted(v)
+        print("  ticks %-11s median %6d  max %6d  (of 88000 a render period)" % (k, v[len(v) // 2], v[-1]))
+    print("  SR interrupt mask at digimono_blocks:", dict(rp["sr"]), " SP:", {hex(k): n for k, n in rp["sp"].items()})
+if PROBE:
+    print("  stack: first seen at %#x, deepest %#x (pc %#x): %d bytes below" % (st.get("sptop", 0), st.get("spmin", 0),
+          st.get("spmin_pc", 0), st.get("sptop", 0) - st.get("spmin", 0)))
 print("  ran %.0f s: %d blocks of voice 0, %d of the master" % (time.time() - t0, len(blocks), len(master)))
 
 print("the track and its SRC page")

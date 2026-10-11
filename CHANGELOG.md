@@ -3,6 +3,23 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## Digi Mono 0.21: its own stack for the render: a fix for MACRO's random crashes (HW: not yet)
+- **Fix: random crashes with MACRO** (reported on 2.1h: an exception screen, vector 4 (illegal
+  instruction) at 0x00080000; or the screen off with a sustained tone; or a freeze, each needing a power
+  cycle). The audio render is an interrupt (level 5, measured in digiemu) and runs on the stack of
+  whichever task it interrupts: in digiemu it ran on at least five different task stacks. The stock
+  render keeps its stack use small; Digi Mono's engines need up to about 1.9 KB (MACRO's BDRUM: the
+  render, MACRO's 720-byte frame and the drum's 512), the other machines about 1 KB. A task interrupted
+  with less than that left overran its stack into whatever lies below it, and the damage showed up later,
+  anywhere: a return to a wrong address, a lock-up. Now digimono_blocks runs on a 4 KB stack of its own
+  (glue.s switches to it and back), so the render takes nothing from the task it interrupts beyond the
+  registers it saves (64 bytes, as before).
+- **Mod memory:** the 4 KB stack leaves about 4.9 KB free in a build with every mod here.
+- Checked in digiemu on OS 1.54 (build 2.1i): MACRO BDRUM, 2OP FM and CHORDS (sines, chorus) play bit for
+  bit as before, with digimono_blocks on its own stack in every block (BDRUM used 1.2 KB of the 4 KB).
+  tests/digiemu_mono.py gained probes for this: STACKPROBE, RENDERPROBE (the interrupt level and stack
+  at the render), STACKDUMP.
+
 ## Digi Mono 0.20: CHORDS lighter (HW: not yet)
 - **The chord's notes are worked out once**, not every block: the four oscillators' steps (the chord, its
   inversion and spread, the ensemble spread) are kept in the voice and made again only when the note or

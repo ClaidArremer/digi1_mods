@@ -112,7 +112,13 @@ digimono_icon_mask:
 | "pea 0x80001a18" (the first argument of 0x40072478), one instruction after the point digisophie hooks
 | (0x40077fba), so both run; digimono_blocks() overwrites the block of every voice that plays a Digi
 | Mono machine. The pea is done here: the return address goes one slot down and 0x80001a18 into its place.
-| Every register is kept; the EMAC is not touched (the C code has no MAC instructions).
+| Every register is kept; the engines that use the EMAC (MACRO, CHORDS' sines) save and restore it.
+|
+| The render is an interrupt (level 5) and runs on the stack of whatever task it interrupted, which may
+| have little room left; the engines need up to about 2 KB (MACRO's drums: 1.9 KB). So digimono_blocks
+| runs on a stack of its own, DIGIMONO_STACK bytes in digimono.c, with room above that for the interrupts
+| of higher levels that may arrive meanwhile. Without it, a MACRO voice could overrun a task's stack into
+| what lies below it: a lock-up, an exception screen or a silent hang, at random.
         .balign 2
         .globl  digimono_rblock
 digimono_rblock:
@@ -121,7 +127,11 @@ digimono_rblock:
         movem.l %d0-%d7/%a0-%a6, (%sp)
         move.l  #0x80001a18, %d0
         move.l  %d0, 64(%sp)                    | [ret][0x80001a18]: the pea this replaced
+        move.l  %sp, %d0
+        lea     digimono_stack_top, %sp          | our own stack
+        move.l  %d0, -(%sp)                     | the task's, to go back to
         jsr     digimono_blocks
+        move.l  (%sp), %sp                      | back on the task's stack
         movem.l (%sp), %d0-%d7/%a0-%a6
         lea     60(%sp), %sp
         rts

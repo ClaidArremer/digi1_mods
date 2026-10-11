@@ -152,6 +152,9 @@ What each parameter does, as this engine reads the manual:
 - **Machines:** nine descriptors in core 2.1's `core_machines`, ids 20..28 (POLY SIN 26, MACRO 27, CHORDS 28), clear of NEIGHBOR (4), POLY (6),
   DIGISLICER (5) and SOPHIE (7). They have `params` = ONESHOT and `render` = ONESHOT, and digimono
   recognises its voices through core's `core_track_machine`.
+- **Stack (0.21):** the render is an interrupt (level 5) on the interrupted task's stack; `digimono_rblock`
+  switches to a 4 KB stack of Digi Mono's own (`digimono_stack`) for `digimono_blocks`, whose deepest
+  calls take about 1.9 KB (MACRO's drums), and back.
 - **Audio:** the voice loop `0x400757fe` resamples each voice's sample, 64 samples at 96 kHz. A half-band
   filter brings them to 48 kHz as 32 Q31 samples at `0x8000eb70`, and the filter stage `0x400761b8`
   reads them from there. Between the two, at `0x4007606e`, `digimono_rblock` overwrites the block of a
