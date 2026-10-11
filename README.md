@@ -38,7 +38,7 @@ your OS file from your own official one.
 
 | mod | what it adds | version | hardware |
 |---|---|---|---|
-| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN, and MACRO (Plaits' engines) | 0.16 | not yet tested |
+| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN, and MACRO (Plaits' engines) | 0.17 | not yet tested |
 | [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0b | not yet tested |
 | [Digi Utilities](#digi-utilities) (`digiutils`) | waveform, spectrum and X-Y pages, tuner, track activity | 1.9a | stand-alone 1.5d confirmed |
 | [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0b | not yet tested |
@@ -82,6 +82,8 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
   volume is the track's LEVEL and AMP page.
 - **Tick it in elekloader** and digichain is ticked with it; it combines with every other mod here, Digi Poly
   included, and with digisophie, digineighbor and digislicer (their `-chain` builds).
+- **No lock-up under overload** (0.17): if the voices ask for more CPU than there is, Digi Mono's voices rest for
+  moments (the sound drops out) instead of the unit freezing.
 - **Light enough for a few tracks at once**: 0.16 made SAW and PULSE about three times lighter at full unison, ENS
   and POLY SIN 12-28 % and the MACRO engines 5-25 %; 0.10 and 0.11 made VO 16-19 % and ENS 20-29 % lighter (ENS starts with its chorus
   off, CHRL 0: the chorus is its costliest part). On a unit
