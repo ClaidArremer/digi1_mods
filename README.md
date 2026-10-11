@@ -66,7 +66,7 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
 
 ## Digi Mono
 
-**Digi Mono** (elekloader mod `digimono`, 0.16, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and MACRO
+**Digi Mono** (elekloader mod `digimono`, 0.17, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and MACRO
 - **Seven new machines in the FUNC+SRC list**, each with its own icon: **MONO SIN**, **MONO NOISE** (sample and
   hold, red noise), **MONO SAW** (unison, two sub-oscillators), **MONO PULSE** (PWM, unison, subs), **MONO ENS**
   (four oscillators at set intervals, saw to pulse, chorus), **MONO VO** (a formant voice: vowel to vowel,
