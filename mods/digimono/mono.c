@@ -8,7 +8,7 @@
 #include "mono_tables.h"
 
 /* The EMAC (CHORDS' sines): fractional, truncating, ACC0 only; saved and put back around its use, as
- * macro.c does (the firmware's audio code uses the unit). A PC build computes the same in 64-bit C. */
+ * Digi Macro does (the firmware's audio code uses the unit). A PC build computes the same in 64-bit C. */
 #if defined(__mcoldfire__)
 static inline int32_t fmac1(int32_t a, int32_t x)                              /* a x / 2^31, rounded */
 {
@@ -175,20 +175,18 @@ void mono_init(struct mono_voice *v)
     v->rng = 0x6d2b79f5u;
 }
 
-/* The shared part (mono.h) for machine: MACRO's state, or the chorus line, set up when the voice turns to it */
+/* The chorus line, cleared when the voice first plays here (own 0: Digi Mono's voice 0 after mono_init or
+ * after a machine of another mod; digimono.c) */
 static void own_part(struct mono_voice *v, int machine)
 {
-    int o = machine == MONO_MACRO ? 2 : 1, i;
-    if (v->own == o)
+    int i;
+    (void)machine;
+    if (v->own == 1)
         return;
-    if (o == 2) {
-        macro_init(&v->macro);
-    } else {
-        for (i = 0; i < MONO_CHO_LEN; i++)
-            v->dl[i] = 0;
-        v->wr = 0;
-    }
-    v->own = (uint8_t)o;
+    for (i = 0; i < MONO_CHO_LEN; i++)
+        v->dl[i] = 0;
+    v->wr = 0;
+    v->own = 1;
 }
 
 void mono_trig(struct mono_voice *v, int machine)
@@ -206,8 +204,6 @@ void mono_trig(struct mono_voice *v, int machine)
     v->age = 0;
     v->c_lo = v->c_bp = 0;
     v->env = 1u << 30;
-    if (machine == MONO_MACRO)
-        macro_trig(&v->macro);
 }
 
 static void render_sin(struct mono_voice *v, uint32_t inc, int16_t *out, int n)
@@ -1143,14 +1139,6 @@ void mono_render(struct mono_voice *v, int machine, const uint8_t *p, uint32_t i
     case MONO_VO:   render_vo(v, p, inc, out, n); break;
     case MONO_PSIN: render_psin(v, p, inc, out, n); break;
     case MONO_CHORD: render_chord(v, p, inc, out, n); break;
-    case MONO_MACRO:
-        while (n > 0) {                     /* the MACRO engines work in blocks of up to 32 */
-            int k = n < 32 ? n : 32;
-            macro_render(&v->macro, p, inc, out, k);
-            out += k;
-            n -= k;
-        }
-        break;
     default:
         while (n--)
             *out++ = 0;

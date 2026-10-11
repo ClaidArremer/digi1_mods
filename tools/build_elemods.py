@@ -22,9 +22,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SHARED = {  # file -> folder it comes from
     "cable.s": "src", "cc.s": "src", "lock.s": "src", "scope.s": "src", "tuner.s": "src",
-    "spectrum.s": "src", "songoff.s": "src", "kitstore.h": "src", "spec_tables.inc": "bin", "spec_sin.bin": "bin",
+    "spectrum.s": "src", "songoff.s": "src", "kitstore.h": "src", "digimono_ext.h": "src", "spec_tables.inc": "bin", "spec_sin.bin": "bin",
 }
-MODS = ["digipoly", "digiutils", "digimatrix", "digieq", "digimono"]
+MODS = ["digipoly", "digiutils", "digimatrix", "digieq", "digimono", "digimacro"]
 
 
 def main():

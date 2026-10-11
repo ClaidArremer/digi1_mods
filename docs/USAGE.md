@@ -145,17 +145,17 @@ One page, one band per column (bands 1-4 = knobs A/E, B/F, C/G, D/H):
   after a while.
 - A band at 0 dB (bell/shelf) costs nothing; four active bands cost about 5 % of the audio time (see RISKS.md).
 
-## Digi Mono (elekloader mod `digimono`, 0.21; needs digichain 1.6, ticked with it)
+## Digi Mono (elekloader mod `digimono`, 0.22; needs digichain 1.6, ticked with it) and Digi Macro (`digimacro`, 1.0: MACRO; needs Digi Mono)
 - **Pick a machine:** FUNC+SRC on an audio track, then scroll past SLICE (and past any other mod's machines):
-  MONO SIN, MONO NOISE, MONO SAW, MONO PULSE, MONO ENS, MONO VO, POLY SIN, MACRO, CHORDS. YES to confirm. The track needs no sample.
-- **MACRO** plays engines ported from Plaits: **B ENGN** the engine, in zones of 8: WSHAPE (0-7), 2OP FM
+  MONO SIN, MONO NOISE, MONO SAW, MONO PULSE, MONO ENS, MONO VO, POLY SIN, MACRO (with Digi Macro), CHORDS. YES to confirm. The track needs no sample.
+- **MACRO** (the Digi Macro mod) plays engines ported from Plaits: **B ENGN** the engine, in zones of 8: WSHAPE (0-7), 2OP FM
   (8-15), NOISE (16-23), PARTCL (24-31), BDRUM (32-39), SNARE (40-47), HIHAT (48-55), GRAIN (56-63 and up).
   **C HARM**, **D TIMB**, **E MORP** are Plaits' HARMONICS, TIMBRE, MORPH (F, G, H unused: since 0.18
   each engine plays Plaits' main output only). B is read
   when a note starts: p-lock B on a trig to change the engine there; turned by hand it changes on the next
   note. The drums make their own envelope from each trig: set AMP's decay long. On 2OP FM, MORP below 64
   is phase feedback and above 64 self-modulation; at 64 there is none, and the engine uses less than half
-  the CPU. mods/digimono/MACRO.md has each engine's knobs and costs.
+  the CPU. mods/digimacro/MACRO.md has each engine's knobs and costs.
 - **Play it:** from trigs, the track key, the keyboard (FUNC+TRK) or MIDI, like a sample track. The note
   and knob A (TUNE) set the pitch.
 - **SRC page:** knob A is TUNE. B to H are the machine's; a knob it does not have is blank. Each shows its

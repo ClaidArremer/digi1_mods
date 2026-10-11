@@ -1,18 +1,18 @@
 {
  "id": "digimono",
- "version": "0.21",
+ "version": "0.22",
  "title": "Digi Mono",
  "category": "Sound",
  "author": "gdeo607",
  "license": "MIT",
- "description": "Synth machines for the audio tracks, after the Monomachine's GND and SWAVE machines: MONO SIN, MONO NOISE, MONO SAW (unison, two sub-oscillators), MONO PULSE (PWM, unison, sub), MONO ENS (four oscillators at set intervals, chorus), MONO VO (a formant voice: vowel to vowel, consonants), POLY SIN (three sines at set notes, a pitch envelope) and MACRO (engines ported from Plaits by Emilie Gillet, MIT licence: knob B picks the engine, C/D/E are HARMONICS/TIMBRE/MORPH; Plaits' main output) and CHORDS (four oscillators as a chord: 24 chord types, inversion, spread; sines, or ENS's saw to pulse and chorus), in the FUNC+SRC machine list. They need no sample; the track's filter, amp, LFOs and effects work on them as on a sample. The Monomachine-style machines are a clean-room engine (no Monomachine code or data). The SRC page shows each machine's own knobs (B, C, E, F, G, H); A is TUNE, D the (unused) sample slot. Needs digichain 1.6 or later, which elekloader ticks with it.",
+ "description": "Synth machines for the audio tracks, after the Monomachine's GND and SWAVE machines: MONO SIN, MONO NOISE, MONO SAW (unison, two sub-oscillators), MONO PULSE (PWM, unison, sub), MONO ENS (four oscillators at set intervals, chorus), MONO VO (a formant voice: vowel to vowel, consonants), POLY SIN (three sines at set notes, a pitch envelope) and CHORDS (four oscillators as a chord: 24 chord types, inversion, spread; sines, or ENS's saw to pulse and chorus), in the FUNC+SRC machine list. They need no sample; the track's filter, amp, LFOs and effects work on them as on a sample. The Monomachine-style machines are a clean-room engine (no Monomachine code or data). Digi Macro adds MACRO (Plaits' engines) to the same list, rendered by Digi Mono. The SRC page shows each machine's own knobs (B, C, E, F, G, H); A is TUNE, D the (unused) sample slot. Needs digichain 1.6 or later, which elekloader ticks with it.",
  "device": "digitakt-mk1",
  "os": "1.53",
  "sources": [
   "glue.s",
   "digimono.c",
   "mono.c",
-  "macro.c"
+  "sine.c"
  ],
  "sites": [
   {
@@ -182,19 +182,6 @@
   },
   {
    "to": "core_machines",
-   "order": 67,
-   "data": "00000000",
-   "relocs": [
-    [
-     0,
-     "abs32",
-     "sym:digimono_m27",
-     0
-    ]
-   ]
-  },
-  {
-   "to": "core_machines",
    "order": 68,
    "data": "00000000",
    "relocs": [
@@ -207,6 +194,9 @@
    ]
   }
  ],
+ "collections": {
+  "digimono_ext": 4
+ },
  "requires": [
   "core",
   "digichain"
@@ -220,7 +210,6 @@
    "machine:24",
    "machine:25",
    "machine:26",
-   "machine:27",
    "machine:28",
    "render:voice blocks 0x40077fc2",
    "param:SLICE page names, ranges and values while a Digi Mono machine is active"

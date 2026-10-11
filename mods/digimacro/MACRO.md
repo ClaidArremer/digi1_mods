@@ -1,10 +1,14 @@
-# MACRO: Plaits' engines as one Digi Mono machine
+# MACRO: Plaits' engines as one machine (the Digi Macro mod)
 
-Status: **0.18: eight engines (WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT, GRAIN), Plaits' main
+Status: **Digi Macro 1.0 (MACRO as in Digi Mono 0.18-0.21): eight engines (WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT, GRAIN), Plaits' main
 output (OUT) only; checked in emulation.** More engines are added one at a time with the same workflow
 (below).
 
-MACRO is one more machine in Digi Mono's FUNC+SRC list (machine 27). Its sound comes from engines of
+MACRO is a machine in the FUNC+SRC list (machine 27), in its own elekloader mod, `digimacro`, since
+Digi Mono 0.22. Digi Mono hosts it (src/digimono_ext.h): it plays MACRO's voices in the audio render, on
+its own stack and under its overload guard, keeps each voice's MACRO state in the voice, and draws the
+knobs with the names and values Digi Macro gives (`digimacro.c`). Digi Macro imports Digi Mono's sine
+table (`MACRO_SINE`, mods/digimono/sine.c). Its sound comes from engines of
 **Plaits**, the macro oscillator by Emilie Gillet (github.com/pichenettes/eurorack, MIT licence), restated
 in 32-bit integer arithmetic for the ColdFire, which has no FPU. The licence text is at the top of
 `macro.c` and `macro_tables.h`. Plaits is Mutable Instruments' product; this is an unofficial port of its

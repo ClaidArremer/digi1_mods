@@ -15,9 +15,11 @@ your OS file from your own official one.
 - **Digi Poly**: chords on any audio track, from its own trigs, by borrowing other tracks' voices.
 - **Digi Mono**: seven synth machines in the FUNC+SRC list (sine, noise, saw, pulse, an ensemble, a formant
   voice, and POLY SIN: three sines, a chord on one track), each with its own icon and its own SRC page,
-  values in their units; and **MACRO**: eight engines ported from Plaits (waveshaping, 2-op FM, noise,
-  particles, kick, snare, hi-hat, grains), the engine on knob B, so p-locks can change it per step; and
-  **CHORDS**: four oscillators as a chord, with chord type, inversion and spread on their own knobs.
+  values in their units; and **CHORDS**: four oscillators as a chord, with chord type, inversion and
+  spread on their own knobs.
+- **Digi Macro**: **MACRO**, eight engines ported from Plaits (waveshaping, 2-op FM, noise, particles,
+  kick, snare, hi-hat, grains), the engine on knob B, so p-locks can change it per step. A mod of its own
+  (it needs Digi Mono, which plays its voices).
 - **Digi Matrix**: any track's LFO to any parameter of any track, 8 slots, per pattern.
 - **Digi Utilities**: waveform, spectrum and X-Y scope, a tuner and track activity, on a held "...".
 - **Digi EQ**: a 4-band master EQ on every output, main outs, headphones and USB.
@@ -39,7 +41,8 @@ your OS file from your own official one.
 
 | mod | what it adds | version | hardware |
 |---|---|---|---|
-| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN, MACRO (Plaits' engines) and CHORDS | 0.21 | not yet tested |
+| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN and CHORDS | 0.22 | not yet tested |
+| [Digi Macro](#digi-macro) (`digimacro`) | MACRO: Plaits' engines as a machine (needs Digi Mono) | 1.0 | not yet tested |
 | [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0c | not yet tested |
 | [Digi Utilities](#digi-utilities) (`digiutils`) | waveform, spectrum and X-Y pages, tuner, track activity | 1.9a | stand-alone 1.5d confirmed |
 | [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0c | not yet tested |
@@ -67,17 +70,14 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
 
 ## Digi Mono
 
-**Digi Mono** (elekloader mod `digimono`, 0.21, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and MACRO
+**Digi Mono** (elekloader mod `digimono`, 0.22, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and CHORDS
 - **Seven new machines in the FUNC+SRC list**, each with its own icon: **MONO SIN**, **MONO NOISE** (sample and
   hold, red noise), **MONO SAW** (unison, two sub-oscillators), **MONO PULSE** (PWM, unison, subs), **MONO ENS**
   (four oscillators at set intervals, saw to pulse, chorus), **MONO VO** (a formant voice: vowel to vowel,
   consonants) and **POLY SIN** (three sines at set notes - a chord on one track - with a pitch envelope). They need no sample; the track's filter, amp, LFOs, sends and p-locks work on them as on a
   sample.
-- **MACRO** (0.16): engines from **Plaits** (Emilie Gillet, MIT licence), ported to integer arithmetic:
-  WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT and GRAIN. Knob B picks the engine in zones of 8
-  (p-lockable: it switches on the trig), C / D / E are HARMONICS / TIMBRE / MORPH. Each engine plays
-  Plaits' main output; 0.18 dropped its second (AUX) output, which freed about 10.5 KB of mod memory. Each engine is checked
-  against Plaits' own code; [mods/digimono/MACRO.md](mods/digimono/MACRO.md).
+- **MACRO** is now its own mod, [Digi Macro](#digi-macro) (0.22). Digi Mono still plays its voices: it
+  hosts machines of other mods (src/digimono_ext.h), on its render stack and with its overload guard.
 - **CHORDS** (0.19): a chord on one track. **B TYPE** picks one of 24 chords (MAJ, MIN, SUS2, SUS4, DIM,
   AUG, MAJ6, MIN6, MAJ7, MIN7, DOM7, MMAJ7, M7B5, DIM7, 7SUS4, ADD9, MADD9, MAJ9, MIN9, DOM9, QUART, FIFTH,
   OCT, UNI), **C INV** its inversion (ROOT, 1ST, 2ND, 3RD), **E SPRD** its spread (CLOSE, OPEN, WIDE,
@@ -100,6 +100,18 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
   (tests/digiemu_mono.py); **not yet on a unit**. Details: [mods/digimono/DESIGN.md](mods/digimono/DESIGN.md).
 
 <table><tr><td align="center"><img src="docs/img/digimono_vo.png" width="384" alt="MONO VO SRC page"><br><sub>A MONO VO track's SRC page: each knob shows its value in place, the top bar its full name</sub></td><td align="center"><img src="docs/img/digimono_ens.png" width="384" alt="MONO ENS SRC page"><br><sub>MONO ENS: PCH2 at +5 semitones, CHRL at 5</sub></td></tr></table>
+
+
+## Digi Macro
+
+**Digi Macro** (elekloader mod `digimacro`, 1.0, needs Digi Mono 0.22, which elekloader ticks with it) - MACRO
+- **MACRO** in the FUNC+SRC list (after POLY SIN): engines from **Plaits** (Emilie Gillet, MIT licence),
+  ported to integer arithmetic: WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT and GRAIN. Knob B picks
+  the engine in zones of 8 (p-lockable: it switches on the trig), C / D / E are HARMONICS / TIMBRE /
+  MORPH; each engine plays Plaits' main output. Each engine is checked against Plaits' own code:
+  [mods/digimacro/MACRO.md](mods/digimacro/MACRO.md).
+- **Why a mod of its own:** a build without MACRO saves its 32 KB of code. MACRO was part of Digi Mono
+  up to 0.21; its sounds keep their machine (27) and knobs.
 
 ## Digi Matrix
 

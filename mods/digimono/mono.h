@@ -13,7 +13,6 @@
 #define MONO_H
 
 #include <stdint.h>
-#include "macro.h"
 
 /* The machines. Numbered for this engine only; the SRC machine list maps onto them. */
 enum {
@@ -24,7 +23,7 @@ enum {
     MONO_ENS  = 4,      /* SWAVE-ENS   four oscillators at set intervals, saw..pulse, chorus      */
     MONO_VO   = 5,      /* VO-6        a formant voice: vowel 1 -> vowel 2, consonants              */
     MONO_PSIN = 6,      /* (GND-SIN)   three sines at set notes, a pitch envelope: POLY SIN         */
-    MONO_MACRO = 7,     /* MACRO       engines ported from Plaits (macro.c); knob B picks one         */
+    MONO_EXT7  = 7,     /* (id 27: a machine of another mod: Digi Macro's MACRO; src/digimono_ext.h)   */
     MONO_CHORD = 8,     /* CHORDS      four oscillators as a chord: type, inversion, spread; ENS's sound */
     MONO_MACHINES
 };
@@ -40,7 +39,6 @@ enum {
  *   ENS      PCH2  PCH3  PCH4  WAVE  PW    CHRL  CHRW
  *   VO       VOC1  VOC2  V-SW  VOIC  CONS  CLEN  CVOL
  *   PSIN     NOT1  NOT2  NOT3  EDEP  ESPD  -     -
- *   MACRO    ENGN  HARM  TIMB  MORP  -     -     -     (macro.h)
  *   CHORD    TYPE  INV   SPRD  WAVE  PW    CHRL  CHRW
  */
 #define MONO_PARAMS 7
@@ -49,8 +47,7 @@ enum {
 #define MONO_INC_MAX 0x40000000u    /* 12 kHz: the highest fundamental the oscillators play         */
 
 /* One voice's state. Zero it once (or call mono_init); mono_trig starts a note. 1,176 bytes: 96 of 32-bit
- * words and bytes, then the chorus line (16-bit) or MACRO's state, which share their memory: a voice plays
- * one machine at a time, and the one it turns to starts that part afresh (own). */
+ * words and bytes, then the chorus line (16-bit), cleared when a voice turns to one of these machines (own). */
 struct mono_voice {
     uint32_t ph[4];                 /* oscillator phases: main + unison (SAW, PULS), osc 1..4 (ENS)  */
     uint32_t lfo;                   /* PULS: the PWM LFO; ENS: the chorus LFO                         */
@@ -61,17 +58,14 @@ struct mono_voice {
     uint16_t wr;                    /* ENS: chorus write position                                    */
     uint8_t  sub;                   /* SAW, PULS: main-oscillator wraps, bit 0 / bits 0-1 = sub 1 / 2 */
     uint8_t  pad;                   /* VO: bit 0, which sample of a 24 kHz pair is next              */
-    uint8_t  own;                   /* what the shared part holds: 0 nothing yet, 1 the chorus line, 2 MACRO */
+    uint8_t  own;                   /* 1: the chorus line is set up (0: clear it before use)             */
     uint8_t  spare[3];
     int32_t  f_lo[3], f_bp[3];      /* VO: the three formant resonators                              */
     int32_t  c_lo, c_bp;            /* VO: the consonant's noise band                                */
     int32_t  glp;                   /* VO: the glottal source's low-pass                             */
     uint32_t age;                   /* VO: samples since the note started, saturating                */
     uint32_t env;                   /* PSIN: the pitch envelope, Q30: 1 at the note's start, decaying */
-    union {
-        int16_t  dl[MONO_CHO_LEN];  /* ENS (and the machines but MACRO): chorus delay line            */
-        struct macro_voice macro;   /* MACRO: the engine playing and its state                       */
-    };
+    int16_t  dl[MONO_CHO_LEN];      /* ENS, CHORDS: the chorus delay line                            */
     /* after the chorus line, so that the line's samples stay within an 8-bit displacement of the voice
      * (the ColdFire's indexed addressing): CHORDS' notes, kept while the note and chord stay */
     uint32_t ch_inc;                /* CHORDS: the note's step and chord (key) its io were made for    */
@@ -95,6 +89,10 @@ void mono_render(struct mono_voice *v, int machine, const uint8_t *p, uint32_t i
 /* The phase increment of a pitch in 1/128 semitone, MIDI note 0 = 0 (note 60 = 7680 = middle C),
  * clamped to MONO_INC_MAX. */
 uint32_t mono_pitch_inc(int32_t pitch);
+
+/* the sine table (sine.c): one cycle in 512 steps, Q15, and 128 more (a cosine reads it a quarter on);
+ * Digi Macro imports it */
+extern const int16_t MACRO_SINE[641];
 
 /* CHORDS: the chord type knob TYPE's value -> 0..23, the types' names; the four notes of p (semitones
  * from the played note, low to high) */

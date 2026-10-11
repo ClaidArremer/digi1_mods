@@ -1,6 +1,6 @@
-/* Digi Mono's MACRO machine: synthesis engines ported from Plaits (Emilie Gillet, MIT licence), in 32-bit
+/* Digi Macro's MACRO machine (once part of Digi Mono): synthesis engines ported from Plaits (Emilie Gillet, MIT licence), in 32-bit
  * integer arithmetic for the ColdFire (no FPU, no 64-bit maths, no library calls). See macro.c for the
- * licence text and mods/digimono/MACRO.md for the engines and how each was checked against the original.
+ * licence text and mods/digimacro/MACRO.md for the engines and how each was checked against the original.
  *
  * One machine, several engines: knob B picks the engine. Each engine plays Plaits' main output (OUT); its
  * second output (AUX) is left out, for room and speed. It is read at each note start (and while a voice
@@ -160,8 +160,8 @@ void macro_render(struct macro_voice *m, const uint8_t *p, uint32_t inc, int16_t
 /* The engine knob B's value -> its engine, and the engines' names as the knob shows them. */
 int macro_engine_of(int b);
 extern const char *const macro_engine_name[MACRO_ENGINES];
-/* one cycle of a sine in 512 steps, Q15 (+ 128 more: a cosine reads it a quarter on); MONO SIN, POLY SIN
- * and VO read it too */
+/* one cycle of a sine in 512 steps, Q15 (+ 128 more: a cosine reads it a quarter on): Digi Mono's (its sine.c),
+ * which Digi Macro imports */
 extern const int16_t MACRO_SINE[641];
 
 #endif

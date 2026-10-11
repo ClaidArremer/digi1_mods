@@ -325,7 +325,7 @@ check(len(mine) > len(blocks) * 0.9, "voice 0 plays machine %d in %d of %d block
 # replay on this PC: the same engine, the same starts, notes and words, block by block
 e = H.Engine(MODEL)
 if st["init"]:                                       # the device's state (big-endian) into this PC's struct
-    le = H.swap_state(st["init"])
+    le = H.swap_state(st["init"], macro=MODEL == H.MACRO)
     e.v.raw[:] = le
 same = diff = 0
 first_bad = None

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Digi Mono's MACRO engines (mods/digimono/macro.c) built for the DT1's CPU, run on an emulated
+"""Digi Macro's MACRO engines (mods/digimacro/macro.c) built for the DT1's CPU, run on an emulated
 ColdFire V4e.
     python3 tests/emu_macro.py            (needs m68k-linux-gnu-gcc/ld/nm, gcc, unicorn, capstone)
    The unicorn must emulate the EMAC as the ColdFire manual describes (digiemu's build does; a stock
@@ -20,8 +20,9 @@ from unicorn.m68k_const import *
 from capstone import Cs, CS_ARCH_M68K, CS_MODE_BIG_ENDIAN, CS_MODE_M68K_040
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(HERE, "..", "mods", "digimono", "macro.c")
-INC = os.path.join(HERE, "..", "mods", "digimono")
+SRC = os.path.join(HERE, "..", "mods", "digimacro", "macro.c")
+INC = os.path.join(HERE, "..", "mods", "digimacro")
+SINE = os.path.join(HERE, "..", "mods", "digimono", "sine.c")    # MACRO_SINE: Digi Mono's, which Digi Macro imports
 CFLAGS = ["-mcpu=54455", "-O2", "-ffreestanding", "-fno-builtin", "-nostdlib", "-fno-pic", "-fno-pie",
           "-fomit-frame-pointer", "-Wall", "-Werror"]
 TEXT = 0x40100000
@@ -44,9 +45,12 @@ def build_cf():
     work = tempfile.mkdtemp(prefix="macro_cf_")
     obj, elf, binf = (os.path.join(work, n) for n in ("macro.o", "macro.elf", "macro.bin"))
     subprocess.check_call(["m68k-linux-gnu-gcc"] + CFLAGS + ["-I", INC, "-c", SRC, "-o", obj])
-    und = subprocess.check_output(["m68k-linux-gnu-nm", "-u", obj], text=True).split()
-    check(not und, "the ColdFire object needs nothing from outside (undefined: %s)" % (und or "none"))
-    subprocess.check_call(["m68k-linux-gnu-ld", "-Ttext=0x%x" % TEXT, "-e", "macro_render", "-o", elf, obj])
+    und = [w for w in subprocess.check_output(["m68k-linux-gnu-nm", "-u", obj], text=True).split() if w != "U"]
+    check(und == ["MACRO_SINE"], "the ColdFire object needs nothing from outside but Digi Mono's sine (undefined: %s)"
+          % (" ".join(und) or "none"))
+    objs = obj.replace("macro.o", "sine.o")
+    subprocess.check_call(["m68k-linux-gnu-gcc"] + CFLAGS + ["-c", SINE, "-o", objs])
+    subprocess.check_call(["m68k-linux-gnu-ld", "-Ttext=0x%x" % TEXT, "-e", "macro_render", "-o", elf, obj, objs])
     subprocess.check_call(["m68k-linux-gnu-objcopy", "-O", "binary", elf, binf])
     syms = {}
     for line in subprocess.check_output(["m68k-linux-gnu-nm", elf], text=True).splitlines():
@@ -58,7 +62,7 @@ def build_cf():
 
 def build_pc():
     so = os.path.join(tempfile.mkdtemp(prefix="macro_pc_"), "macro.so")
-    subprocess.check_call(["gcc", "-O2", "-shared", "-fPIC", "-I", INC, SRC, "-o", so])
+    subprocess.check_call(["gcc", "-O2", "-shared", "-fPIC", "-I", INC, SRC, SINE, "-o", so])
     return ctypes.CDLL(so)
 
 

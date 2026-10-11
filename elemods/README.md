@@ -3,7 +3,8 @@
 Ready to add to [elekloader](https://github.com/irpina/elekloader): open it, choose your own official
 Digitakt mk1 **OS 1.53** or **OS 1.54** file, **Install** these, tick the ones you want and build. Files
 ending `-os1.54` are for OS 1.54, the others for 1.53: elekloader lists the ones that fit your file.
-It brings the core mod (`core-2.1`); Digi Mono, Digi Poly and the `-chain` builds tick digichain with them.
+It brings the core mod (`core-2.1`); Digi Mono, Digi Poly and the `-chain` builds tick digichain with them,
+and Digi Macro (MACRO) ticks Digi Mono.
 
 | file | sha256 |
 |---|---|
@@ -15,10 +16,12 @@ It brings the core mod (`core-2.1`); Digi Mono, Digi Poly and the `-chain` build
 | `digifilter-1.0i.elemod` | `acfb71cc7719d93d` |
 | `digihealth-1.0-os1.54.elemod` | `b8a49c1137fb3f2a` |
 | `digihealth-1.0.elemod` | `aba9413ee205e136` |
+| `digimacro-1.0-os1.54.elemod` | `4d6702a76462f7db` |
+| `digimacro-1.0.elemod` | `8a3d6c7a797d2c6f` |
 | `digimatrix-1.0c-os1.54.elemod` | `ce04490838836956` |
 | `digimatrix-1.0c.elemod` | `dc2c9d32dde13e75` |
-| `digimono-0.21-os1.54.elemod` | `0fa47fa118493680` |
-| `digimono-0.21.elemod` | `2b6c7226462990e7` |
+| `digimono-0.22-os1.54.elemod` | `7159b5bf74c9a1c8` |
+| `digimono-0.22.elemod` | `127d9841f68c9fa5` |
 | `digineighbor-0.6-chain-os1.54.elemod` | `49fbcabbab7a8f7d` |
 | `digineighbor-0.6-chain.elemod` | `4621ed88a23c86a6` |
 | `digipoly-2.0a-os1.54.elemod` | `d374422cd1a95b25` |

@@ -18,11 +18,12 @@
 | Descriptor: id, name, short name, icon (below), params, render. They take ONESHOT's eight parameters (their
 | defaults on a switch, MIDI CC 16-23) and render as ONESHOT, so the voice runs the whole stock voice
 | path (the amp envelope and VOL included, which an unknown render machine skips). digimono_rblock
-| replaces the block of a voice whose track plays one of them (core_track_machine). Ids 20..28: clear of
+| replaces the block of a voice whose track plays one of them (core_track_machine). Ids 20..26 and 28 (27 is
+| Digi Macro's MACRO, which Digi Mono renders too: src/digimono_ext.h), clear of
 | NEIGHBOR (4), DIGISLICER (5), Digi Poly's POLY (6) and SOPHIE (7).
         .balign 4
         .globl  digimono_m20, digimono_m21, digimono_m22, digimono_m23, digimono_m24, digimono_m25
-        .globl  digimono_m26, digimono_m27, digimono_m28
+        .globl  digimono_m26, digimono_m28
 digimono_m20:   .long   20, str_sin,  str_sin_s,  digimono_icon_sin,  0, 0
 digimono_m21:   .long   21, str_nois, str_nois_s, digimono_icon_nois, 0, 0
 digimono_m22:   .long   22, str_saw,  str_saw_s,  digimono_icon_saw,  0, 0
@@ -30,7 +31,6 @@ digimono_m23:   .long   23, str_puls, str_puls_s, digimono_icon_puls, 0, 0
 digimono_m24:   .long   24, str_ens,  str_ens_s,  digimono_icon_ens,  0, 0
 digimono_m25:   .long   25, str_vo,   str_vo_s,   digimono_icon_vo,   0, 0
 digimono_m26:   .long   26, str_psin, str_psin_s, digimono_icon_psin, 0, 0
-digimono_m27:   .long   27, str_macr, str_macr_s, digimono_icon_macr, 0, 0
 digimono_m28:   .long   28, str_chrd, str_chrd_s, digimono_icon_chrd, 0, 0
 str_sin:        .asciz  "MONO SIN"
 str_sin_s:      .asciz  "MSIN"
@@ -46,8 +46,6 @@ str_vo:         .asciz  "MONO VO"
 str_vo_s:       .asciz  "MVO"
 str_psin:       .asciz  "POLY SIN"
 str_psin_s:     .asciz  "PSIN"
-str_macr:       .asciz  "MACRO"
-str_macr_s:     .asciz  "MACR"
 str_chrd:       .asciz  "CHORDS"
 str_chrd_s:     .asciz  "CHRD"
 
@@ -91,11 +89,6 @@ digimono_icon_psin:
 digimono_px_psin:
         .long   0x08000000, 0x04000000, 0x04000000, 0x08000000, 0x10000000, 0x20000000
         .long   0x40000000, 0x00000000, 0x44000000, 0x54000000, 0x7c000000
-digimono_icon_macr:
-        .long   BMP_VT, 11, 7, 1, digimono_px_macr, digimono_icon_mask, 0
-digimono_px_macr:
-        .long   0x20000000, 0x10000000, 0x08000000, 0x10000000, 0x20000000, 0x40000000
-        .long   0x20000000, 0x10000000, 0x08000000, 0x10000000, 0x20000000
 digimono_icon_chrd:
         .long   BMP_VT, 11, 7, 1, digimono_px_chrd, digimono_icon_mask, 0
 digimono_px_chrd:

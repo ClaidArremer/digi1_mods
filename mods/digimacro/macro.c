@@ -1,4 +1,4 @@
-/* Digi Mono's MACRO machine: engines ported from Plaits, in 32-bit integer arithmetic.
+/* Digi Macro's MACRO machine: engines ported from Plaits, in 32-bit integer arithmetic.
  *
  * The synthesis is Plaits' (github.com/pichenettes/eurorack, plaits/dsp), by Emilie Gillet, under the MIT
  * licence below; this file restates it in fixed point for a CPU without an FPU. Each engine says which

@@ -41,7 +41,7 @@ def build():
     obj, elf, binf = (os.path.join(work, n) for n in ("mono.o", "mono.elf", "mono.bin"))
     objm = os.path.join(work, "macro.o")
     subprocess.check_call(["m68k-linux-gnu-gcc"] + CFLAGS + ["-c", H.SRC, "-o", objm.replace("macro.o", "mono1.o")])
-    subprocess.check_call(["m68k-linux-gnu-gcc"] + CFLAGS + ["-c", H.SRC_MACRO, "-o", objm])
+    subprocess.check_call(["m68k-linux-gnu-gcc"] + CFLAGS + ["-c", H.SRC_SINE, "-o", objm])     # MACRO: emu_macro.py
     subprocess.check_call(["m68k-linux-gnu-ld", "-r", "-o", obj, objm.replace("macro.o", "mono1.o"), objm])
     und = subprocess.check_output(["m68k-linux-gnu-nm", "-u", obj], text=True).split()
     check(not und, "the ColdFire object needs nothing from outside (undefined: %s)" % (und or "none"))

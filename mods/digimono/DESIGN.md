@@ -18,7 +18,7 @@ after the Monomachine's GND and SWAVE machines:
 | `MONO VO`    | VO-6       | a formant voice: vowel 1 gliding to vowel 2, consonants at the note's start |
 | `POLY SIN`   | (GND-SIN)  | three sines at set notes (a chord on one track), with a pitch envelope |
 | `CHORDS`     | (SWAVE-ENS) | four oscillators as a chord: type, inversion, spread; sines or ENS's saw..pulse and chorus |
-| `MACRO`      | (Plaits)   | engines ported from Plaits, the engine on knob B: see MACRO.md (not clean-room: MIT-licensed code) |
+| `MACRO`      | (Plaits)   | the Digi Macro mod's (since 0.22), hosted here: mods/digimacro/MACRO.md (not clean-room: MIT-licensed code) |
 
 They are picked like any machine: FUNC+SRC, after SLICE. A Digi Mono track needs no sample. Its trigs,
 note locks, TUNE, the FLTR, AMP and LFO pages, the sends, p-locks and the track level work on it as on a
@@ -149,7 +149,10 @@ What each parameter does, as this engine reads the manual:
 
 ## How it sits in the firmware (OS 1.53; details in docs/TECHNICAL_NOTES.md)
 
-- **Machines:** nine descriptors in core 2.1's `core_machines`, ids 20..28 (POLY SIN 26, MACRO 27, CHORDS 28), clear of NEIGHBOR (4), POLY (6),
+- **Machines:** eight descriptors in core 2.1's `core_machines`, ids 20..26 and 28 (POLY SIN 26, CHORDS 28),
+  and other mods' machines in 20..29 hosted through the collection `digimono_ext` (src/digimono_ext.h:
+  Digi Macro's MACRO, 27): Digi Mono renders their voices (their state in the voice's chorus-line memory)
+  and draws their knobs from their tables. Clear of NEIGHBOR (4), POLY (6),
   DIGISLICER (5) and SOPHIE (7). They have `params` = ONESHOT and `render` = ONESHOT, and digimono
   recognises its voices through core's `core_track_machine`.
 - **Stack (0.21):** the render is an interrupt (level 5) on the interrupted task's stack; `digimono_rblock`

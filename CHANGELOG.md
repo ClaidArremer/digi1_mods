@@ -3,6 +3,23 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## Digi Mono 0.22 and Digi Macro 1.0: MACRO in a mod of its own (HW: not yet)
+- **MACRO is now the Digi Macro mod** (`digimacro`, elemods/digimacro-1.0*.elemod): tick it in elekloader
+  with Digi Mono (it requires it, and elekloader ticks Digi Mono and digichain with it). A build without
+  it saves MACRO's 32 KB of code. Same machine (27), same place in the list, same knobs and sound: a sound
+  saved with MACRO plays as before.
+- **Digi Mono hosts other mods' machines** (src/digimono_ext.h): a mod adds its machine to core's list
+  (core_machines) and its engine to Digi Mono's collection `digimono_ext` (init, trig, render, the knobs'
+  parameters, defaults, names and value texts). Digi Mono plays its voices in the render, on its own stack
+  and under the overload guard, keeps each voice's state in the voice's chorus-line memory (1 KB: no RAM
+  added), and draws its knobs on the SRC and LFO pages. MACRO is the first.
+- Digi Mono's sine table moved from MACRO's tables to Digi Mono (mods/digimono/sine.c); Digi Macro imports
+  it (one copy). Digi Mono 0.22 alone: 25 KB of code (was 57 KB with MACRO).
+- Checked: MACRO's samples are 0.21's, bit for bit (tests/emu_macro.py: the ColdFire build equals the PC
+  build; the engines' code is unchanged); every Digi Mono machine as 0.21 (tests/emu_mono.py,
+  mono_signal.py). In digiemu on OS 1.54 (build 2.1j, both mods): MACRO BDRUM and 2OP FM, CHORDS and
+  MONO ENS play bit for bit their own output.
+
 ## Digi Mono 0.21: its own stack for the render: a fix for MACRO's random crashes (HW: not yet)
 - **Fix: random crashes with MACRO** (reported on 2.1h: an exception screen, vector 4 (illegal
   instruction) at 0x00080000; or the screen off with a sustained tone; or a freeze, each needing a power

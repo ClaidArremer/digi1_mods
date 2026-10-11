@@ -8,7 +8,7 @@
 # Developing:
 #   tools/dev.sh setup                     tools: elekloader, digiemu (+ patched Unicorn), digisophie
 #   tools/dev.sh test                      the engine alone: what each machine does, ColdFire = PC
-#   tools/dev.sh build [mods...]           your OS file: core 2.1 + the mods (default: digimono)
+#   tools/dev.sh build [mods...]           your OS file: core 2.1 + the mods (default: digimono digimacro)
 #   tools/dev.sh emu                       put the last build into digiemu (first boot, ~1 min)
 #   tools/dev.sh emutest                   the build in digiemu, every Digi Mono machine, bit for bit
 #   tools/dev.sh play                      open digiemu's window (play the build with mouse and keys)
@@ -20,7 +20,7 @@
 #                                          they hold no firmware bytes), with elemods/README.md; with
 #                                          STOCK154=your OS 1.54 file, the -os1.54 ones too
 #
-# Mods for build/all: digimono, digipoly, digiutils, digimatrix, digieq (this repo); digisophie, digislicer,
+# Mods for build/all: digimono, digimacro (MACRO; needs digimono), digipoly, digiutils, digimatrix, digieq (this repo); digisophie, digislicer,
 # digifilter, digineighbor, digihealth (fetched by setup).
 # digisophie, digineighbor and digislicer are built for digichain (tools/chain_patch.py; CHAIN=0 builds
 # them as they are), so they combine with each other; digichain is added to a build that needs it.
@@ -179,20 +179,20 @@ cmd_build() {
     need_stock
     find_cross
     local mods=("$@")
-    [[ ${#mods[@]} -gt 0 ]] || mods=(digimono)
+    [[ ${#mods[@]} -gt 0 ]] || mods=(digimono digimacro)
     mkdir -p "$BUILD/mods" "$LOG"
     say "building core 2.1 and ${mods[*]}"
     local files=()
     files+=("$(build_one core "$TOOLS/elekloader/mods/core")")
     for m in "${mods[@]}"; do
         case $m in
-            digimono|digichain) files+=("$(build_one "$m" "$ROOT/mods/$m")") ;;
+            digichain) files+=("$(build_one "$m" "$ROOT/mods/$m")") ;;
             digisophie) files+=("$(build_one digisophie "$TOOLS/digisophie")") ;;
             digislicer) files+=("$(build_one digislicer "$TOOLS/digislicer")") ;;
             digifilter) files+=("$(build_one digifilter "$TOOLS/digifilter")") ;;
             digineighbor) files+=("$(build_one digineighbor "$TOOLS/digineighbor")") ;;
             digihealth) files+=("$(build_one digihealth "$TOOLS/digihealth")") ;;
-            digiutils|digimatrix|digieq|digipoly)
+            digimono|digimacro|digiutils|digimatrix|digieq|digipoly)
                 PYTHONPATH=$TOOLS/elekloader python3 "$ROOT/tools/build_elemods.py" --stock "$STOCK" \
                     --elekloader "$TOOLS/elekloader" --out "$BUILD/mods" --mods "$m" > "$LOG/build-$m.log" 2>&1 \
                     || die "$m failed to build: $LOG/build-$m.log"
@@ -258,7 +258,7 @@ cmd_emutest() {
     say "every machine passed; recordings in $LOG/MONO_*.wav, screens in $LOG/png_*"
 }
 
-ELEMOD_ALL=(digimono digichain digiutils digimatrix digieq digipoly digisophie digislicer digifilter digineighbor digihealth)
+ELEMOD_ALL=(digimono digimacro digichain digiutils digimatrix digieq digipoly digisophie digislicer digifilter digineighbor digihealth)
 
 FETCHED=(elekloader digiemu digisophie digislicer digifilter digineighbor digihealth)
 
@@ -326,9 +326,9 @@ cmd_elemods() {   # every mod as an .elemod, in one folder, with which pairs com
     local ok=() m f
     for m in "${ELEMOD_ALL[@]}"; do
         case $m in
-            digimono|digichain) f=$(build_one "$m" "$ROOT/mods/$m") \
+            digichain) f=$(build_one "$m" "$ROOT/mods/$m") \
                 || { echo "  $m: FAILED (see $LOG/build-$m.log)"; continue; } ;;
-            digiutils|digimatrix|digieq|digipoly)
+            digimono|digimacro|digiutils|digimatrix|digieq|digipoly)
                 PYTHONPATH=$TOOLS/elekloader python3 "$ROOT/tools/build_elemods.py" --stock "$STOCK" \
                     --elekloader "$TOOLS/elekloader" --out "$BUILD/mods" --mods "$m" > "$LOG/build-$m.log" 2>&1 \
                     || { echo "  $m: FAILED (see $LOG/build-$m.log)"; continue; }

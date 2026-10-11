@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Generate mods/digimono/macro_tables.h: the lookup tables Digi Mono's MACRO engines use, converted to
-16-bit fixed point from the tables of Plaits (Emilie Gillet, MIT licence).
+"""Generate mods/digimacro/macro_tables.h: the lookup tables the MACRO engines (Digi Macro) use, converted to
+16-bit fixed point from the tables of Plaits (Emilie Gillet, MIT licence); and with --sine,
+mods/digimono/sine.c: the sine table Digi Mono's machines read and Digi Macro imports from it.
 
-    python3 tools/gen_macro_tables.py <eurorack checkout> > mods/digimono/macro_tables.h
+    python3 tools/gen_macro_tables.py <eurorack checkout> > mods/digimacro/macro_tables.h
+    python3 tools/gen_macro_tables.py <eurorack checkout> --sine > mods/digimono/sine.c
 
 The source is plaits/resources.cc of github.com/pichenettes/eurorack. Float tables in -1..1 become Q15
 (x 32768, clamped to +-32767), semitone tables Q8 (x 256); 16-bit tables are copied as they are.
@@ -63,20 +65,28 @@ SHARED = {"MACRO_SINE"}
 
 def main():
     res = load(sys.argv[1] + "/plaits/resources.cc")
+    sine = "--sine" in sys.argv[2:]
     print(COPYRIGHT)
-    print("#ifndef MACRO_TABLES_H\n#define MACRO_TABLES_H\n\n#include <stdint.h>\n")
+    if sine:
+        print("/* Digi Mono's sine (MONO SIN, POLY SIN, VO, CHORDS), which Digi Macro imports. */\n\n#include <stdint.h>\n")
+    else:
+        print("#ifndef MACRO_TABLES_H\n#define MACRO_TABLES_H\n\n#include <stdint.h>\n")
     for src, name, kind in TABLES:
+        if (name in SHARED) != sine:
+            continue
         typ, vals = res[src]
         if kind == "q15":
             vals = [max(-32767, min(32767, int(round(v * 32768)))) for v in vals]
         elif kind == "q8":
             vals = [int(round(v * 256)) for v in vals]
         print("#define %s_SIZE %d" % (name, len(vals)))
-        # MACRO_SINE is also MONO SIN's, POLY SIN's and VO's (mono.c, through macro.h): one copy
+        # MACRO_SINE is Digi Mono's (sine.c); Digi Macro imports it: one copy
         print("%sconst int16_t %s[%d] = {" % ("" if name in SHARED else "static ", name, len(vals)))
         for i in range(0, len(vals), 12):
             print("    " + ", ".join("%d" % v for v in vals[i:i + 12]) + ",")
         print("};\n")
+    if sine:
+        return
     # stmlib's OnePole::tan<FREQUENCY_ACCURATE>(f) / f for f = 0..0.5 in 64 steps, Q12 (the SVF's g = f x this)
     import math
     pi = math.pi
