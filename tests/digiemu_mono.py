@@ -4,6 +4,8 @@ play it from the sequencer, and check what the render hands on is the engine's o
 
     <digiemu's python> tests/digiemu_mono.py --digiemu <digiemu checkout> --fw <firmware folder name>
         --machine SAW [--knobs B:+20,E:-5] [--png <dir>] [--wav <file>]
+    (environment: PLAYTURNS=E:+3,E:-2,... turns knobs while the pattern plays; OVSYM=<address of
+    digimono_overloads in the build's map> prints how many renders Digi Mono's overload guard counted)
         --stock <official .syx> --elekloader <checkout> --mods <core.elemod> <digimono.elemod>
 
 The build must be set up in digiemu first (python -m emu.portable --add BUILD.syx --yes); it needs core 2.1
@@ -146,7 +148,17 @@ for k in (24, 28, 32, 36):                          # steps 1, 5, 9, 13 of track
 tap(9, 20, 60)                                      # RECORD off
 at(0, "rec", True)
 tap(10, 20, 20)                                     # PLAY
-at(2600, "snap", "3_playing")
+PT = [x for x in os.environ.get("PLAYTURNS", "").split(",") if x]
+if PT:                                              # knob turns while the pattern plays (spread over the play)
+    gap = 2600 // (len(PT) + 1)
+    for s_ in PT:
+        k_, n_ = s_.split(":")
+        at(gap, "wait")
+        for _ in range(abs(int(n_))):
+            at(2, "encoder", 1 + "ABCDEFGH".index(k_.upper()), 4 if int(n_) > 0 else -4)
+    at(gap, "snap", "3_playing")
+else:
+    at(2600, "snap", "3_playing")
 tap(11, 20, 40)                                     # STOP
 at(0, "rec", False)
 STEPS = t + 2
@@ -160,6 +172,8 @@ knobs = {}
 
 
 def after(u, ad, s, d):
+    if os.environ.get("OVSYM"):
+        st["ov"] = struct.unpack(">I", u.mem_read(int(os.environ["OVSYM"], 16), 4))[0]
     if not st["rec"]:
         return
     sb = struct.unpack(">I", u.mem_read(0x80001228, 4))[0] & 1
@@ -220,6 +234,8 @@ print("digiemu: %s, machine MONO %s, knobs %s" % (a.fw, a.machine, a.knobs or "u
 t0 = time.time()
 E = G.Emulator(SNAP, syx=os.environ["DT2_SYX"], realtime=False, audio=True)
 E.run()
+if os.environ.get("OVSYM"):
+    print("  overloads counted by the guard:", st.get("ov"))
 print("  ran %.0f s: %d blocks of voice 0, %d of the master" % (time.time() - t0, len(blocks), len(master)))
 
 print("the track and its SRC page")

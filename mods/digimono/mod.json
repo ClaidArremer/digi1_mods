@@ -1,6 +1,6 @@
 {
  "id": "digimono",
- "version": "0.16",
+ "version": "0.17",
  "title": "Digi Mono",
  "category": "Sound",
  "author": "gdeo607",
@@ -217,6 +217,16 @@
    "event": "ev_tick",
    "fn": "digimono_tick",
    "order": 55
+  },
+  {
+   "event": "ev_render_in",
+   "fn": "digimono_rin",
+   "order": 60
+  },
+  {
+   "event": "ev_render_out",
+   "fn": "digimono_rout",
+   "order": 60
   }
  ],
  "ports": {

@@ -69,6 +69,7 @@ struct digimono_voice {
     uint8_t quiet;                          /* blocks the amp envelope has been silent; QUIET_BLOCKS: asleep */
 };
 static struct digimono_voice voices[8];
+static int shed;                            /* blocks left in which the voices rest (the overload guard) */
 
 static int16_t word(int v, int slot)
 {
@@ -123,12 +124,51 @@ static void digimono_block(int v)
         if (d->quiet >= QUIET_BLOCKS)
             return;                         /* asleep: the stock block is silence already */
     }
+    if (shed)
+        return;                             /* the CPU is overloaded: rest (see the overload guard) */
     /* the pitch as the render computes a sample's: the note plus TUNE (after the LFOs), in Q16 semitones */
     pitch = VOICE_NOTE[v] + ((int32_t)(word(v, SLOT_TUNE) - 16384) << 8);
     params(v, model, p);
     mono_render(&d->mv, model, p, mono_pitch_inc(pitch >> 9), out, 32);
     for (i = 0; i < 32; i++)
         BLOCK(v)[i] = (int32_t)out[i] << 16;
+}
+
+/* ---- the overload guard ---------------------------------------------------------------------------- *
+ * The audio render runs at a higher priority than the UI. If a render takes longer than the time between
+ * two renders, the next one starts at once, the UI never runs again (no knob, no key release reaches the
+ * firmware) and the outputs repeat their last buffers: a freeze only a power cycle ends. So each render is
+ * timed (core's ev_render_in / ev_render_out, DTIM0: core starts it free-running at the 132 MHz bus clock;
+ * a 32-frame render period at 48 kHz is 88,000 ticks). Three renders in a row over 94 % of the period (a
+ * single long one is a spike, not an overload) make the Digi Mono voices rest for the next SHED_BLOCKS
+ * blocks (their blocks stay the stock silence, their state waits), which gives the CPU back. The sound
+ * drops out for a moment instead of the unit locking up. */
+#define DTCN0        (*(volatile const uint32_t *)0xFC07000C)
+#define RENDER_TICKS 88000u
+#define SHED_LIMIT   (RENDER_TICKS - RENDER_TICKS / 16)
+#define SHED_BLOCKS  24                         /* 16 ms */
+static uint32_t rin_t;
+static int over;                                /* renders over the limit in a row */
+uint32_t digimono_overloads;                    /* renders over the limit since power-on (diagnostics) */
+
+void digimono_rin(void)
+{
+    rin_t = DTCN0;
+}
+
+void digimono_rout(void)
+{
+    uint32_t dur = DTCN0 - rin_t;
+    if (dur > SHED_LIMIT && dur < 0x80000000u) {
+        if (++over >= 3) {
+            shed = SHED_BLOCKS;
+            digimono_overloads++;
+        }
+    } else {
+        over = 0;
+    }
+    if (shed && over < 3)
+        shed--;
 }
 
 void digimono_blocks(void)

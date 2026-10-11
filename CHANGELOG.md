@@ -3,6 +3,19 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## Digi Mono 0.17: an overload guard instead of a freeze (HW: not yet)
+- **Fix: the unit could lock up** (screen and knobs frozen, the last bit of sound looping with crackles,
+  only a power cycle ended it) when the voices asked for more CPU than there is, as reported with MACRO's
+  BDRUM while previewing and turning MORPH. The audio render runs above the UI: once a render takes longer
+  than the time between two renders, the next starts at once and the UI never runs again, so not even the
+  key release that would end the note gets through. Digi Mono now times every render (core's render
+  events, the 132 MHz DTIM0 counter): three renders in a row past 94 % of the render period make its
+  voices rest for 16 ms (their blocks stay silent, their state waits), which hands the CPU back. Under
+  overload the Digi Mono sound drops out for moments instead of the unit locking up.
+- Checked in digiemu on OS 1.54 with FAST AUDIO: a build made to overload on purpose locks up without the
+  guard (the main loop stops) and keeps running with it (the guard counted 436 overloads, the sequencer and
+  UI went on); the real build counts no overload and every machine plays bit for bit as before.
+
 ## Digi Mono 0.16: everything lighter (HW: not yet)
 - **SAW and PULSE** add their oscillators as one ramp with steps where an oscillator wraps, the polyBLEP
   only beside a step: about a third of 0.15's CPU at full unison with both subs. The sound moves by a few
