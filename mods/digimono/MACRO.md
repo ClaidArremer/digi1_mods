@@ -1,7 +1,8 @@
 # MACRO: Plaits' engines as one Digi Mono machine
 
-Status: **0.16: eight engines (WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT, GRAIN), checked in
-emulation; not yet run on a unit.** More engines are added one at a time with the same workflow (below).
+Status: **0.18: eight engines (WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT, GRAIN), Plaits' main
+output (OUT) only; checked in emulation.** More engines are added one at a time with the same workflow
+(below).
 
 MACRO is one more machine in Digi Mono's FUNC+SRC list (machine 27). Its sound comes from engines of
 **Plaits**, the macro oscillator by Emilie Gillet (github.com/pichenettes/eurorack, MIT licence), restated
@@ -18,11 +19,11 @@ published code, not affiliated with it.
 | C | HARM | Plaits' HARMONICS |
 | D | TIMB | Plaits' TIMBRE |
 | E | MORP | Plaits' MORPH |
-| F | AUX | 0-55 plays Plaits' OUT, 72-127 its AUX output (a second, related sound), 56-71 crossfades between them. Only in 56-71 are both computed (about twice the CPU) |
+| F, G, H | - | unused |
 
 The track's FLTR, AMP, LFO pages, p-locks and the sends work on MACRO as on any machine. The LFO page names
-the knobs as above ("MACR:Harmonics"). A switch to MACRO sets ENGN to the first engine, HARM / TIMB /
-MORP to 64 and AUX to 0.
+the knobs as above ("MACR:Harmonics"). A switch to MACRO sets ENGN to the first engine and HARM / TIMB /
+MORP to 64.
 
 ENGN zones, 8 values each, so a saved p-lock keeps its engine when engines are added:
 
@@ -32,16 +33,21 @@ ENGN zones, 8 values each, so a saved p-lock keeps its engine when engines are a
 
 ## The engines
 
-| engine | Plaits model | HARM | TIMB | MORP | AUX output |
-|---|---|---|---|---|---|
-| WSHAPE | waveshaping | waveshaper curve | wavefolder amount | waveform asymmetry | a sine folded towards a second fold curve |
-| 2OP FM | two-operator FM | frequency ratio (quantized) | modulation index | feedback: phase feedback below 64, self-modulation above | a sub-oscillator one octave down, modulated |
-| NOISE | filtered noise | filter response, low-pass to band-pass to high-pass (OUT); the second band's distance (AUX) | clock rate of the noise | resonance | two band-passes, at the note and at HARM's distance from it |
-| PARTCL | particle noise | frequency spread of the resonators | density of the impulses | resonance | the raw impulses |
-| BDRUM | analog bass drum (OUT) / synthetic bass drum (AUX) | attack FM, self FM and drive | tone | decay | the synthetic kick |
-| SNARE | analog snare (OUT) / synthetic snare (AUX) | snappy (noise against body) | tone | decay | the synthetic snare |
-| HIHAT | 808-style metallic hat (OUT) / ring-modulated hat (AUX) | noisiness | tone | decay | the ring-modulated hat |
-| GRAIN | grainlets (OUT) / Z oscillator (AUX) | formant ratio and carrier bleed (OUT); discontinuity shape (AUX) | formant frequency | carrier shape | the Z oscillator |
+| engine | Plaits model | HARM | TIMB | MORP |
+|---|---|---|---|---|
+| WSHAPE | waveshaping | waveshaper curve | wavefolder amount | waveform asymmetry |
+| 2OP FM | two-operator FM | frequency ratio (quantized) | modulation index | feedback: phase feedback below 64, self-modulation above |
+| NOISE | filtered noise | filter response, low-pass to band-pass to high-pass | clock rate of the noise | resonance |
+| PARTCL | particle noise | frequency spread of the resonators | density of the impulses | resonance |
+| BDRUM | analog bass drum | attack FM, self FM and drive | tone | decay |
+| SNARE | analog snare | snappy (noise against body) | tone | decay |
+| HIHAT | 808-style metallic hat | noisiness | tone | decay |
+| GRAIN | grainlets | formant ratio and carrier bleed | formant frequency | carrier shape |
+
+Each engine plays Plaits' main output (OUT). Plaits' second output (AUX: the synthetic kick and snare, the
+ring-modulated hat, the Z oscillator, FM's sub-oscillator, WSHAPE's second fold, NOISE's two band-passes,
+PARTCL's raw impulses) was dropped in 0.18: it freed about 10.5 KB of the mods' shared memory and took the
+sub-oscillator out of FM's feedback loop. Every OUT sample is the same as 0.17's.
 
 The drums (BDRUM, SNARE, HIHAT) make their own envelope from each trig, with Plaits' accent fixed at 0.8:
 set the track's AMP decay long and play them with trigs. A drum costs nothing once its sound has died
@@ -65,9 +71,8 @@ modulators, and feedback through a one-pole low-pass of the carrier.
   inside the feedback loop, measured up to +30 % level at full MORP. Hence 4x there.)
 
 ### NOISE
-`noise_engine.cc`: two clocked noises (sample-and-hold with band-limited steps) at TIMB's rate; OUT runs
-the first through a state-variable filter at the note, its response swept by HARM, its resonance by MORP;
-AUX runs both through band-passes. The filters run on the CPU's multiply-accumulate unit in 24-bit
+`noise_engine.cc`: a clocked noise (sample-and-hold with band-limited steps) at TIMB's rate through a
+state-variable filter at the note, its response swept by HARM, its resonance by MORP. The filters run on the CPU's multiply-accumulate unit in 24-bit
 fractional arithmetic, rounded, with coefficients kept consistent so high resonance stays stable.
 
 ### PARTCL
@@ -75,20 +80,19 @@ fractional arithmetic, rounded, with coefficients kept consistent so high resona
 random within HARM's spread at its next impulse, then a low-pass at the note and Plaits' limiter.
 
 ### BDRUM, SNARE, HIHAT
-`analog_bass_drum.h`, `synthetic_bass_drum.h`, `analog_snare_drum.h`, `synthetic_snare_drum.h`,
-`hi_hat.h`: the trigger pulses, resonators, noise and VCAs as in Plaits. Two reductions keep them light:
+`analog_bass_drum.h`, `analog_snare_drum.h`, `hi_hat.h` (SquareNoise): the trigger pulses, resonators, noise and VCAs as in Plaits. Two reductions keep them light:
 the kick's resonator retunes every 8 samples once the attack is over (at every other during the attack
 FM), and the hi-hat's filter coefficients are worked out again only when TIMB moves.
 
 ### GRAIN
 `grain_engine.cc`, `grainlet_oscillator.h`, `z_oscillator.h`: two grainlets (a sine formant hard-synced to
-a shaped carrier), the second HARM away (-2..+2 octaves), summed and DC-blocked; AUX is the Z oscillator.
+a shaped carrier), the second HARM away (-2..+2 octaves), summed and DC-blocked.
 
 ## How each engine is checked (the workflow)
 
 1. **Reference:** Plaits' float engine compiled for the PC from its source, rendering a note with given
    knobs (a harness outside this repository, as it builds Plaits' code as it is).
-2. **Comparison** (same note, knobs, OUT and AUX): the waveform's residual after aligning to a fraction of
+2. **Comparison** (same note and knobs; up to 0.17 also the AUX output): the waveform's residual after aligning to a fraction of
    a sample, and the magnitude spectrum's difference; for FM, the partials' frequencies and levels.
 3. **ColdFire:** `tests/emu_macro.py` builds `macro.c` with elekloader's flags for the DT1, runs it
    on an emulated ColdFire V4e, checks it needs no library code and equals the PC build sample for sample
@@ -110,31 +114,35 @@ the spread of Plaits' own renders with different random seeds):
 - **NOISE, PARTCL:** spectra and levels within the variance of Plaits' own renders.
 - **BDRUM, SNARE, HIHAT:** the deterministic parts (pulses, resonators, envelopes) match Plaits' waveform;
   with noise, spectrum and decay within Plaits' own variance.
-- **GRAIN:** waveform and spectrum match Plaits' for OUT and AUX.
+- **GRAIN:** waveform and spectrum match Plaits'.
 - 0.16's speed-ups changed no sample: its MACRO output is 0.15's, sample for sample.
+- 0.18 (OUT only): 0.17 and 0.18 built for the PC from their sources, 2,400 random voices (every engine,
+  knobs moving, pitch bends, re-trigs, drums dying away), F at 0 on 0.17: every sample equal.
 
 ## Cost
 
 Estimated ColdFire cycles a voice a 32-frame block, as a share of the block (tests/emu_macro.py; the block
-is 166,667 cycles at 250 MHz). "Played" is knobs at 64 with a trig every 16th note at 120 BPM:
+is 166,667 cycles at 250 MHz). "Played" is knobs at 64 with a trig every 16th note at 120 BPM; "heavy" is
+HARM, TIMB and MORP at 127:
 
-| engine | played, F at 0 | AUX only (F 127), heavy knobs | crossfade (F 56-71) |
-|---|---|---|---|
-| WSHAPE | 4.4 % | 6.3 % | 9.0 % |
-| 2OP FM | 4.3 % (no feedback); 10.8 % with feedback | 15.5 % | 17.1 % |
-| NOISE | 4.9 % | 6.3 % | 12.0 % |
-| PARTCL | 5.4 % (7.8 % dense) | 6.7 % | 11.7 % |
-| BDRUM | 6.0 % | 10.7 % | 18.7 % |
-| SNARE | 5.4 % | 9.8 % | 18.6 % |
-| HIHAT | 5.9 % | 8.1 % | 14.9 % |
-| GRAIN | 6.3 % | 4.1 % | 10.0 % |
+| engine | played | heavy knobs |
+|---|---|---|
+| WSHAPE | 4.4 % | 4.3 % |
+| 2OP FM | 4.3 % (no feedback) | 10.0 % (feedback, 4x) |
+| NOISE | 4.9 % | 5.2 % |
+| PARTCL | 5.4 % (7.8 % dense) | 9.7 % |
+| BDRUM | 6.0 % | 6.9 % |
+| SNARE | 5.4 % | 7.6 % |
+| HIHAT | 5.9 % | 5.8 % |
+| GRAIN | 6.3 % | 4.9 % |
 
 A MACRO track not playing costs nothing, and a drum costs nothing once it has died away. The stock render
 uses about 80 % of each block, so roughly 20 % is left for all the mods; with digihealth's FAST AUDIO
-about 28 %: three to five MACRO voices at once, keeping F out of 56-71 on tracks that play together.
+about 28 %: three to five MACRO voices at once. If the voices ask for more than the block allows, Digi Mono
+rests them for a moment (a short dropout) rather than let the unit lock up (0.17).
 
 ## Next engines
 
 From Plaits' list: speech, virtual analog, the swarm, chords, wavetable, string and modal resonators. Each
-needs code room as well as CPU: the mods' shared memory has about 3 KB left with every mod of this
-repository in one build.
+needs code room as well as CPU: the mods' shared memory has about 12 KB left with every mod of this
+repository in one build (0.18).

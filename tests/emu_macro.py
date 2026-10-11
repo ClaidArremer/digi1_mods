@@ -172,7 +172,7 @@ def main():
     worst = 0
     for e, name in enumerate(ENGINES):
         row = []
-        for prm in ([knob_of(e), 64, 64, 64, 0, 0, 0], [knob_of(e), 127, 127, 127, 64, 0, 0]):
+        for prm in ([knob_of(e), 64, 64, 64, 0, 0, 0], [knob_of(e), 127, 127, 127, 0, 0, 0]):
             cf.call("macro_init", VOICE)
             cf.call("macro_trig", VOICE)
             for _ in range(4):

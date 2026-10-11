@@ -60,7 +60,7 @@ static const int8_t knob_p[MONO_MACHINES][KNOBS] = {
     { 0,  1,  2,  3,  5,  6,  4},       /* ENS   PCH2 PCH3 PCH4 WAVE CHRL CHRW, D PW      */
     { 0,  1,  2,  4,  5,  6,  3},       /* VO    VOC1 VOC2 V-SW CONS CLEN CVOL, D VOIC    */
     { 0,  1,  3,  4, -1, -1,  2},       /* PSIN  NOT1 NOT2 EDEP ESPD, D NOT3              */
-    { 0,  1,  3,  4, -1, -1,  2},       /* MACRO ENGN HARM MORP AUX, D TIMB               */
+    { 0,  1,  3, -1, -1, -1,  2},       /* MACRO ENGN HARM MORP, D TIMB                   */
 };
 
 struct digimono_voice {
@@ -197,7 +197,7 @@ static const char *const sname[MONO_MACHINES][KNOBS] = {
     {"PCH2", "PCH3", "PCH4", "WAVE", "CHRL", "CHRW", "PW"},
     {"VOC1", "VOC2", "V-SW", "CONS", "CLEN", "CVOL", "VOIC"},
     {"NOT1", "NOT2", "EDEP", "ESPD", "-",    "-",    "NOT3"},
-    {"ENGN", "HARM", "MORP", "AUX",  "-",    "-",    "TIMB"},
+    {"ENGN", "HARM", "MORP", "-",    "-",    "-",    "TIMB"},
 };
 static const char *const lname[MONO_MACHINES][KNOBS] = {
     {"-", "-", "-", "-", "-", "-", "-"},
@@ -207,7 +207,7 @@ static const char *const lname[MONO_MACHINES][KNOBS] = {
     {"Pitch Osc 2", "Pitch Osc 3", "Pitch Osc 4", "Saw-Pulse", "Chorus Level", "Chorus Width", "Pulse Width"},
     {"Vowel 1", "Vowel 2", "Vowel Glide", "Consonant", "Cons. Length", "Cons. Level", "Breath"},
     {"Note 1", "Note 2", "Env Depth", "Env Speed", "-", "-", "Note 3"},
-    {"Engine", "Harmonics", "Morph", "Out-Aux Mix", "-", "-", "Timbre"},
+    {"Engine", "Harmonics", "Morph", "-", "-", "-", "Timbre"},
 };
 
 /* how each knob's value reads */
@@ -463,7 +463,7 @@ static const uint8_t mono_def[MONO_MACHINES][KNOBS] = {   /* B C E F G H D */
     {63, 63, 63, 0, 0, 127, 0},         /* ENS   PCH2 PCH3 PCH4 WAVE CHRL CHRW, PW (square) */
     {43, 113, 64, 0, 40, 100, 0},       /* VO    VOC1 (AH) VOC2 (EE) V-SW CONS CLEN CVOL, VOIC */
     {63, 63, 64, 64, 0, 0, 63},         /* PSIN  NOT1 NOT2, EDEP ESPD off, D NOT3: MONO SIN */
-    {0, 64, 64, 0, 0, 0, 64},           /* MACRO ENGN (the first) HARM MORP AUX (OUT), D TIMB */
+    {0, 64, 64, 0, 0, 0, 64},           /* MACRO ENGN (the first) HARM MORP, D TIMB    */
 };
 
 static const uint8_t *seen_kit;

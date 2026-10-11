@@ -3,6 +3,22 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## Digi Mono 0.18: MACRO plays Plaits' main output only; 10.5 KB of mod memory freed (HW: not yet)
+- **MACRO's second output (AUX) is gone**, and with it knob F's OUT/AUX crossfade: the synthetic kick and
+  snare, the ring-modulated hi-hat, GRAIN's Z oscillator, FM's sub-oscillator, WSHAPE's second fold,
+  NOISE's two band-passes and PARTCL's raw impulses. F is now unused; a sound saved with F past 55 plays
+  the main output.
+- **Room:** Digi Mono's code is 54.3 KB instead of 64.9 KB, so a build with every mod of this repository
+  has about 12.3 KB of the 128 KB mod memory left instead of 2 KB (room for more engines).
+- **CPU:** the main output costs what it did or a little less (the sub-oscillator no longer runs inside
+  FM's feedback loop: FM with feedback 7 % lighter), and the 56-71 zone that computed both outputs (up to
+  twice the CPU) cannot be reached any more.
+- **Sound unchanged:** 0.17 and 0.18 built for the PC from their sources, 2,400 random voices (every
+  engine, knobs moving, pitch bends, re-trigs, drums dying away), F at 0 on 0.17: every sample equal.
+  tests/emu_macro.py: the ColdFire build equals the PC build on 1,200 random blocks.
+- In digiemu on OS 1.54 (build 2.1f, FAST AUDIO on): MACRO on every engine and MONO SAW play bit for bit
+  their own output and reach the master; turning F no longer moves anything.
+
 ## Digi EQ 1.0c, Digi Matrix 1.0c, Digi Poly 2.0a: settings kept over a power cycle (HW: not yet)
 - **Fix: per-pattern settings set without saving were lost at power-off** (reported: the master EQ came
   back flat). The unit keeps its working project, unsaved edits included, in a non-volatile mirror of each

@@ -39,7 +39,7 @@ enum {
  *   ENS      PCH2  PCH3  PCH4  WAVE  PW    CHRL  CHRW
  *   VO       VOC1  VOC2  V-SW  VOIC  CONS  CLEN  CVOL
  *   PSIN     NOT1  NOT2  NOT3  EDEP  ESPD  -     -
- *   MACRO    ENGN  HARM  TIMB  MORP  AUX   -     -     (macro.h)
+ *   MACRO    ENGN  HARM  TIMB  MORP  -     -     -     (macro.h)
  */
 #define MONO_PARAMS 7
 

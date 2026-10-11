@@ -38,7 +38,6 @@ TABLES = [
     ("lut_ws_bump", "MACRO_WS_BUMP", "i16"),
     ("lut_ws_double_bump", "MACRO_WS_DOUBLE_BUMP", "i16"),
     ("lut_fold", "MACRO_FOLD", "q15"),
-    ("lut_fold_2", "MACRO_FOLD_2", "q15"),
     ("lut_sine", "MACRO_SINE", "q15"),
     ("lut_4x_downsampler_fir", "MACRO_FIR4X", "q15"),
     ("lut_fm_frequency_quantizer", "MACRO_FM_RATIO", "q8"),     # semitones x 256

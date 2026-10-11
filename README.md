@@ -38,7 +38,7 @@ your OS file from your own official one.
 
 | mod | what it adds | version | hardware |
 |---|---|---|---|
-| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN, and MACRO (Plaits' engines) | 0.17 | not yet tested |
+| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN, and MACRO (Plaits' engines) | 0.18 | not yet tested |
 | [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0c | not yet tested |
 | [Digi Utilities](#digi-utilities) (`digiutils`) | waveform, spectrum and X-Y pages, tuner, track activity | 1.9a | stand-alone 1.5d confirmed |
 | [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0c | not yet tested |
@@ -66,7 +66,7 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
 
 ## Digi Mono
 
-**Digi Mono** (elekloader mod `digimono`, 0.17, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and MACRO
+**Digi Mono** (elekloader mod `digimono`, 0.18, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and MACRO
 - **Seven new machines in the FUNC+SRC list**, each with its own icon: **MONO SIN**, **MONO NOISE** (sample and
   hold, red noise), **MONO SAW** (unison, two sub-oscillators), **MONO PULSE** (PWM, unison, subs), **MONO ENS**
   (four oscillators at set intervals, saw to pulse, chorus), **MONO VO** (a formant voice: vowel to vowel,
@@ -74,8 +74,8 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
   sample.
 - **MACRO** (0.16): engines from **Plaits** (Emilie Gillet, MIT licence), ported to integer arithmetic:
   WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT and GRAIN. Knob B picks the engine in zones of 8
-  (p-lockable: it switches on the trig), C / D / E are HARMONICS / TIMBRE / MORPH, F plays OUT (0-55) or
-  AUX (72-127), crossfading between (only there are both computed). Each engine is checked
+  (p-lockable: it switches on the trig), C / D / E are HARMONICS / TIMBRE / MORPH. Each engine plays
+  Plaits' main output; 0.18 dropped its second (AUX) output, which freed about 10.5 KB of mod memory. Each engine is checked
   against Plaits' own code; [mods/digimono/MACRO.md](mods/digimono/MACRO.md).
 - **Their own SRC page**: knobs B-H are the machine's parameters, named and shown in their own units
   (semitones, %, ms, vowels, consonants). A stays TUNE; D is a parameter too (no sample list), and the

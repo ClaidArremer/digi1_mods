@@ -145,13 +145,13 @@ One page, one band per column (bands 1-4 = knobs A/E, B/F, C/G, D/H):
   after a while.
 - A band at 0 dB (bell/shelf) costs nothing; four active bands cost about 5 % of the audio time (see RISKS.md).
 
-## Digi Mono (elekloader mod `digimono`, 0.17; needs digichain 1.6, ticked with it)
+## Digi Mono (elekloader mod `digimono`, 0.18; needs digichain 1.6, ticked with it)
 - **Pick a machine:** FUNC+SRC on an audio track, then scroll past SLICE (and past any other mod's machines):
   MONO SIN, MONO NOISE, MONO SAW, MONO PULSE, MONO ENS, MONO VO, POLY SIN, MACRO. YES to confirm. The track needs no sample.
 - **MACRO** plays engines ported from Plaits: **B ENGN** the engine, in zones of 8: WSHAPE (0-7), 2OP FM
   (8-15), NOISE (16-23), PARTCL (24-31), BDRUM (32-39), SNARE (40-47), HIHAT (48-55), GRAIN (56-63 and up).
-  **C HARM**, **D TIMB**, **E MORP** are Plaits' HARMONICS, TIMBRE, MORPH; **F AUX**: 0-55 plays Plaits' OUT,
-  72-127 its AUX output, 56-71 crossfades (only there are both computed: about twice the CPU). B is read
+  **C HARM**, **D TIMB**, **E MORP** are Plaits' HARMONICS, TIMBRE, MORPH (F, G, H unused: since 0.18
+  each engine plays Plaits' main output only). B is read
   when a note starts: p-lock B on a trig to change the engine there; turned by hand it changes on the next
   note. The drums make their own envelope from each trig: set AMP's decay long. On 2OP FM, MORP below 64
   is phase feedback and above 64 self-modulation; at 64 there is none, and the engine uses less than half

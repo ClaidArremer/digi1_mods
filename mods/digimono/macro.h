@@ -2,7 +2,8 @@
  * integer arithmetic for the ColdFire (no FPU, no 64-bit maths, no library calls). See macro.c for the
  * licence text and mods/digimono/MACRO.md for the engines and how each was checked against the original.
  *
- * One machine, several engines: knob B picks the engine. It is read at each note start (and while a voice
+ * One machine, several engines: knob B picks the engine. Each engine plays Plaits' main output (OUT); its
+ * second output (AUX) is left out, for room and speed. It is read at each note start (and while a voice
  * has not started yet), so a p-lock on B changes the engine on that trig and a turning knob on the next.
  */
 #ifndef MACRO_H
@@ -13,12 +14,12 @@
 enum {
     MACRO_WSH = 0,          /* waveshaping: a slope oscillator through a waveshaper and a wavefolder */
     MACRO_FM  = 1,          /* 2-operator FM with feedback, 4x oversampled (2x without feedback)    */
-    MACRO_NOISE = 2,        /* clocked noise through a LP-to-HP filter (OUT), two band-passes (AUX)  */
-    MACRO_PARTICLE = 3,     /* random impulses through resonant band-passes (OUT), the impulses (AUX) */
-    MACRO_BD = 4,           /* bass drums: an analog-style one (OUT), a synthetic one (AUX)            */
-    MACRO_SD = 5,           /* snare drums: an analog-style one (OUT), a synthetic one (AUX)           */
-    MACRO_HH = 6,           /* hi-hats: six square oscillators (OUT), three ring-modulated pairs (AUX) */
-    MACRO_GRAIN = 7,        /* granular formants: two grainlets (OUT), a Z oscillator (AUX)            */
+    MACRO_NOISE = 2,        /* clocked noise through a LP-to-HP filter                              */
+    MACRO_PARTICLE = 3,     /* random impulses through resonant band-passes                        */
+    MACRO_BD = 4,           /* an analog-style bass drum                                            */
+    MACRO_SD = 5,           /* an analog-style snare drum                                           */
+    MACRO_HH = 6,           /* an 808-style hi-hat: six square oscillators                         */
+    MACRO_GRAIN = 7,        /* granular formants: two grainlets                                     */
     MACRO_ENGINES
 };
 
@@ -32,7 +33,7 @@ enum {
     MACRO_P_HARM   = 1,     /* C  HARM  Plaits' HARMONICS                                          */
     MACRO_P_TIMB   = 2,     /* D  TIMB  Plaits' TIMBRE                                             */
     MACRO_P_MORPH  = 3,     /* E  MORP  Plaits' MORPH                                              */
-    MACRO_P_AUX    = 4,     /* F  AUX   0 = Plaits' OUT .. 127 = its AUX, a crossfade              */
+                            /* (4: F, unused since 0.18; it was AUX)                               */
     MACRO_PARAMS   = 7
 };
 
@@ -47,15 +48,15 @@ struct macro_slope {
 };
 
 struct macro_wsh {
-    struct macro_slope slope, tri;
-    int32_t prev_shape, prev_gain, prev_overtone;   /* Q15, the values the last block ended on        */
+    struct macro_slope slope;
+    int32_t prev_shape, prev_gain;                  /* Q15, the values the last block ended on        */
 };
 
 struct macro_fm {
-    uint32_t carrier, modulator, sub;               /* phases                                        */
+    uint32_t carrier, modulator;                    /* phases                                        */
     int32_t  prev;                                  /* the carrier, one-pole filtered (the feedback)  */
-    int32_t  hc[6], hs[6];                          /* 2x: the last six samples of carrier and sub    */
-    int32_t  car_fir, sub_fir;                      /* 4x: the downsamplers' carried half, Q30        */
+    int32_t  hc[6];                                 /* 2x: the carrier's last six samples             */
+    int32_t  car_fir;                               /* 4x: the downsampler's carried half, Q30        */
     int32_t  prev_amount, prev_feedback;            /* Q15 (amount: Q14)                              */
     int32_t  os4;                                   /* this note runs 4x (it started with feedback)   */
 };
@@ -72,8 +73,8 @@ struct macro_svf {
 };
 
 struct macro_noise {
-    struct macro_cnoise src[2];
-    struct macro_svf mm, bp;                        /* OUT's LP-to-HP filter; AUX's second band-pass  */
+    struct macro_cnoise src;
+    struct macro_svf mm;                            /* the LP-to-HP filter                            */
     int32_t sync;                                   /* a note started: restart both clocks           */
 };
 
@@ -92,59 +93,45 @@ struct macro_particles {
     int32_t sync;
 };
 
-/* Plaits' bass drum engine: AnalogBassDrum (OUT, Q24) and SyntheticBassDrum (AUX, Q24) */
+/* Plaits' bass drum engine, OUT: AnalogBassDrum, Q24 */
 struct macro_bd {
     int32_t trig;
-    int32_t idle[2];                                /* OUT's, AUX's drum has died away: nothing computed */
-    /* analog */
+    int32_t idle;                                   /* the drum has died away: nothing computed       */
     int32_t pulse_left, fm_left, pulse, pulse_lp, fm_lp, retrig, lp_out, tone_lp;
     struct macro_svf res;
     int32_t a1, a2, a3;                             /* the resonator's coefficients now               */
-    /* synthetic */
-    uint32_t phase;
-    int32_t pnoise, fm, fm_lp2, body, body_lp, trans, trans_lp, tone_lp2;
-    int32_t click_lp, click_hp, noise_lp, noise_hp, body_pw, fm_pw;
-    struct macro_svf click;
 };
 
-/* Plaits' snare drum engine: AnalogSnareDrum (OUT) and SyntheticSnareDrum (AUX), Q24 */
+/* Plaits' snare drum engine, OUT: AnalogSnareDrum, Q24 */
 struct macro_sd {
     int32_t trig;
-    int32_t idle[2];
-    /* analog: five modes' resonators, the noise's band-pass; coefficients kept for the block's knobs */
+    int32_t idle;
+    /* five modes' resonators, the noise's band-pass; coefficients kept for the block's knobs */
     int32_t pulse_left, pulse, pulse_lp, noise_env;
     struct macro_svf mode[5], nf;
     int32_t ma1[5], ma2[5], ma3[5], na1, na2, na3;
     uint32_t key_inc;
     int32_t key_knobs;
-    /* synthetic */
-    int32_t ph0, ph1, drum_amp, snare_amp, fm, hold;
-    int32_t drum_lp, snare_hp;
-    struct macro_svf snare_lp;
 };
 
-/* Plaits' hi-hat engine: two HiHats (OUT: SquareNoise, AUX: RingModNoise), Q24 */
+/* Plaits' hi-hat engine, OUT: a HiHat with SquareNoise, Q24 */
 struct macro_hh {
     int32_t trig;
-    int32_t idle[2];
-    int32_t env[2];
-    uint32_t nclk[2];
-    int32_t nsmp[2];
-    struct macro_svf bp[2], hp[2];
+    int32_t idle;
+    int32_t env;
+    uint32_t nclk;
+    int32_t nsmp;
+    struct macro_svf bp, hp;
     uint32_t sq[6];                                 /* SquareNoise's phases                             */
-    uint32_t ph[6];                                 /* RingModNoise's oscillators: phase, next sample,  */
-    int32_t next[6], high[6];                       /* and the square's state                          */
     int32_t key_timb;                               /* the filters' coefficients for this TIMBRE:      */
-    int32_t kc[3][4];                               /* OUT's band-pass, AUX's, the high-pass (svf_c)    */
+    int32_t kc[2][4];                               /* the band-pass, the high-pass (svf_c)             */
 };
 
-/* Plaits' grain engine: GrainletOscillator x 2 (OUT), ZOscillator (AUX), Q24 samples */
+/* Plaits' grain engine, OUT: GrainletOscillator x 2, Q24 samples */
 struct macro_grain {
     uint32_t gc[2], gf[2];                          /* the grainlets' carrier and formant phases (Q32)  */
     int32_t gnext[2];
-    uint32_t zc, zd, zf;                            /* Z: carrier, discontinuity (Q31), formant (Q32)  */
-    int32_t znext;
-    int32_t dc[2];                                  /* the DC blockers' states                         */
+    int32_t dc;                                     /* the DC blocker's state                          */
 };
 
 struct macro_voice {
@@ -152,7 +139,7 @@ struct macro_voice {
     uint8_t latch;                  /* 1: take the engine from knob B at the next block              */
     uint8_t pad[2];                 /* (four bytes, then 32-bit words)                               */
     uint32_t rng;                   /* the voice's random numbers (stmlib's Random)                  */
-    int32_t lim_out, lim_aux;       /* the limiters' peaks (engines Plaits limits), Q17              */
+    int32_t lim_out;                /* the limiter's peak (engines Plaits limits), Q17               */
     union {
         struct macro_wsh wsh;
         struct macro_fm fm;
