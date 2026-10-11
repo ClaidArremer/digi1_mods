@@ -9,20 +9,20 @@ It brings the core mod (`core-2.1`); Digi Mono, Digi Poly and the `-chain` build
 |---|---|
 | `digichain-1.6-os1.54.elemod` | `5d4910f597874ac2` |
 | `digichain-1.6.elemod` | `819f6045b5ad4dea` |
-| `digieq-1.0b-os1.54.elemod` | `82dcd78faf44e67b` |
-| `digieq-1.0b.elemod` | `af5088bf444de4f1` |
+| `digieq-1.0c-os1.54.elemod` | `d0ee392ba21d6590` |
+| `digieq-1.0c.elemod` | `eb5c75fbc5b1ecda` |
 | `digifilter-1.0i-os1.54.elemod` | `fd7ce4b0a20b93cc` |
 | `digifilter-1.0i.elemod` | `acfb71cc7719d93d` |
 | `digihealth-1.0-os1.54.elemod` | `b8a49c1137fb3f2a` |
 | `digihealth-1.0.elemod` | `aba9413ee205e136` |
-| `digimatrix-1.0b-os1.54.elemod` | `f12fd6c0f154f135` |
-| `digimatrix-1.0b.elemod` | `792810c2432cadab` |
+| `digimatrix-1.0c-os1.54.elemod` | `ce04490838836956` |
+| `digimatrix-1.0c.elemod` | `dc2c9d32dde13e75` |
 | `digimono-0.17-os1.54.elemod` | `0e8abdc0f39de2e2` |
 | `digimono-0.17.elemod` | `33f569fb49c35971` |
 | `digineighbor-0.6-chain-os1.54.elemod` | `49fbcabbab7a8f7d` |
 | `digineighbor-0.6-chain.elemod` | `4621ed88a23c86a6` |
-| `digipoly-2.0-os1.54.elemod` | `4cc1462425315077` |
-| `digipoly-2.0.elemod` | `1d2615c58e0a944c` |
+| `digipoly-2.0a-os1.54.elemod` | `d374422cd1a95b25` |
+| `digipoly-2.0a.elemod` | `7ddeefb4616e27e6` |
 | `digislicer-2.1-chain-os1.54.elemod` | `122c976f80179c9d` |
 | `digislicer-2.1-chain.elemod` | `456b4adc4dd32e2e` |
 | `digisophie-1.1.13-chain-os1.54.elemod` | `c035eec552d56628` |

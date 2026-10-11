@@ -39,10 +39,10 @@ your OS file from your own official one.
 | mod | what it adds | version | hardware |
 |---|---|---|---|
 | [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN, and MACRO (Plaits' engines) | 0.17 | not yet tested |
-| [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0b | not yet tested |
+| [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0c | not yet tested |
 | [Digi Utilities](#digi-utilities) (`digiutils`) | waveform, spectrum and X-Y pages, tuner, track activity | 1.9a | stand-alone 1.5d confirmed |
-| [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0b | not yet tested |
-| [Digi Poly](#digi-poly) (`digipoly`) | POLY: chords from a track's own trigs, borrowing other tracks' voices | 2.0 | not yet tested |
+| [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0c | not yet tested |
+| [Digi Poly](#digi-poly) (`digipoly`) | POLY: chords from a track's own trigs, borrowing other tracks' voices | 2.0a | not yet tested |
 | [digichain](#digichain) (`digichain`) | lets SOPHIE, NEIGHBOR, DIGISLICER and Digi Mono share a build; menu icons | 1.3 | not yet tested |
 
 They all need core 2.1 (elekloader brings it) and combine with each other and with the
@@ -97,7 +97,7 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
 
 ## Digi Matrix
 
-**Digi Matrix** (elekloader mod `digimatrix`, 1.0b) - a modulation matrix for the LFOs
+**Digi Matrix** (elekloader mod `digimatrix`, 1.0c) - a modulation matrix for the LFOs
 - **SETTINGS > MOD MATRIX** opens a page with **8 routing slots**. Each one sends **any track's LFO1 or LFO2**
   to **any parameter of any track**, with **its own depth** (-64..+64) - so one LFO can drive several
   parameters across several tracks, each by a different amount, while its own DEP keeps controlling only its
@@ -129,7 +129,7 @@ waveform -> spectrum -> X-Y; Song mode is kept.
 
 ## Digi EQ
 
-**Digi EQ** (elekloader mod `digieq`, 1.0b) - a 4-band master EQ, on **every output**
+**Digi EQ** (elekloader mod `digieq`, 1.0c) - a 4-band master EQ, on **every output**
 - A master page (FUNC+LFO, after Compressor): 4 bands, each with level/Q (knobs A-D, press to switch) and
   frequency/type (knobs E-H, press to switch: HP, low shelf, bell, notch, band pass, high shelf, LP), with the
   response curve drawn above the knobs.
@@ -137,7 +137,7 @@ waveform -> spectrum -> X-Y; Song mode is kept.
   main outs, headphones and USB audio all carry it - as the compressor does. (Up to 1.8a it sat on the
   codec's transmit buffer, which is the analog path only, so USB audio came out unequalized.)
 - **Per pattern**: the settings live in the pattern's kit, so every pattern has its own EQ, saved with the
-  project and kept over a power-off.
+  project and kept over a power-off (1.0c: before, unsaved EQ changes were lost at power-off).
 - **SETTINGS > GLOBAL FX/MIX > MASTER EQ**, beside the firmware's own entries: with it on, the EQ you can hear
   overrides every pattern's own; with it off, each pattern goes back to its own.
 
@@ -145,7 +145,7 @@ waveform -> spectrum -> X-Y; Song mode is kept.
 
 ## Digi Poly
 
-**Digi Poly** (elekloader mod `digipoly`, 2.0, needs core 2.1 and digichain) - the POLY machine, redesigned.
+**Digi Poly** (elekloader mod `digipoly`, 2.0a, needs core 2.1 and digichain) - the POLY machine, redesigned.
 2.0 runs on core 2.1, so it shares a build with every other mod here, Digi Mono included. POLY is now machine
 6 (it was 4, which core 2.1 gave NEIGHBOR): a POLY track saved with 1.0f loads as NEIGHBOR or ONESHOT, so
 choose POLY on it again.
@@ -240,7 +240,7 @@ python3 tools/build_elemods.py --stock <official OS 1.53 .syx> --elekloader <ele
 ```
 
 Then add them in elekloader's window (with its core mod), or on the command line:
-`python -m elekloader.patch --stock <official .syx> --mod core-2.1.elemod --mod digichain-1.6.elemod --mod digipoly-2.0.elemod --mod digimatrix-1.0b.elemod --mod digieq-1.0b.elemod --out custom.syx --version 2.0e`.
+`python -m elekloader.patch --stock <official .syx> --mod core-2.1.elemod --mod digichain-1.6.elemod --mod digipoly-2.0a.elemod --mod digimatrix-1.0c.elemod --mod digieq-1.0c.elemod --out custom.syx --version 2.0e`.
 Add `--mod digiutils-1.9a.elemod` for the "..." utility pages.
 The mods need m68k binutils to build. Every mod's `.elemod` file is also in [elemods/](elemods/) (`tools/dev.sh publish`): they hold the mods' code, and refer to your own official file for anything from the firmware. The other authors' are built from their repositories (elemods/README.md names the commits; their licenses are in elemods/licenses/).
 

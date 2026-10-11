@@ -3,6 +3,21 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## Digi EQ 1.0c, Digi Matrix 1.0c, Digi Poly 2.0a: settings kept over a power cycle (HW: not yet)
+- **Fix: per-pattern settings set without saving were lost at power-off** (reported: the master EQ came
+  back flat). The unit keeps its working project, unsaved edits included, in a non-volatile mirror of each
+  kit's sounds, which the firmware writes itself (its sound serializer, "Sound::updateMirror") whenever it
+  changes a sound. These mods keep their settings in six spare bytes of each sound record that the
+  serializer does write, but a mod writing them in RAM did not make the firmware write the record again.
+  Now, whenever a mod's bytes in a sound change (set by the mod, or put back after a sound load), the mod
+  calls the same serializer for that sound (src/kitstore.h, ks_persist), so they reach the mirror as a knob
+  edit's would. It writes only into a record that carries the serializer's own header, at the place the
+  firmware's own Sound object points to for that pattern and track.
+- Checked in digiemu on OS 1.54: the bytes written into the kit appear in the sound's mirror record at
+  the places the firmware's own copy of them sits (the reserved long and the parameter word), the EQ page,
+  the USB-bus level and the global row as before; the unit tests of all three mods on OS 1.53. A real
+  power cycle is not modelled in the emulator: to be confirmed on the unit.
+
 ## Digi Mono 0.17: an overload guard instead of a freeze (HW: not yet)
 - **Fix: the unit could lock up** (screen and knobs frozen, the last bit of sound looping with crackles,
   only a power cycle ended it) when the voices asked for more CPU than there is, as reported with MACRO's
