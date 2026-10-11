@@ -17,8 +17,9 @@ NAMES = ["SIN", "NOIS", "SAW", "PULS", "ENS", "VO", "PSIN", "MACRO", "CHORD"]
 # struct mono_voice (mono.h): 11 32-bit words, a 16-bit word, 2 bytes, a byte and 3 spare, 11 32-bit words
 # (VO, PSIN), then a part the chorus line (16-bit) and MACRO's state (struct macro_voice, macro.h: four
 # bytes, then 32-bit words) share. The same layout on the ColdFire (big-endian) and on this PC
-# (little-endian). SHARED: where the shared part starts.
+# (little-endian). SHARED: where the shared part starts; after it, CHORDS' 32-bit words.
 SHARED = 96
+UNION = 1024                                 # the chorus line, MONO_CHO_LEN x 2; then 32-bit words (CHORDS)
 _LAYOUT = [(0, 44, 4), (44, 46, 2), (46, 52, 1), (52, SHARED, 4)]
 
 
@@ -44,7 +45,8 @@ def swap_state(b):
         out += bytes(b[SHARED:SHARED + 4])
         out += b"".join(b[i:i + 4][::-1] for i in range(SHARED + 4, SHARED + MACRO_SIZE, 4))
         lo = SHARED + MACRO_SIZE
-    out += b"".join(b[i:i + 2][::-1] for i in range(lo, len(b), 2))
+    out += b"".join(b[i:i + 2][::-1] for i in range(lo, SHARED + UNION, 2))
+    out += b"".join(b[i:i + 4][::-1] for i in range(SHARED + UNION, len(b), 4))
     return bytes(out)
 
 

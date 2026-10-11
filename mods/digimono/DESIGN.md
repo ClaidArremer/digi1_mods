@@ -106,9 +106,12 @@ What each parameter does, as this engine reads the manual:
   - **INV** (32 values a step): that many of the lowest notes go up an octave, ROOT to 3RD.
   - **SPRD** (32 values a step): the voicing opens. From the lowest note up, the notes are raised by
     0 0 0 0 (CLOSE), 0 0 1 1 (OPEN), 0 1 1 2 (WIDE) or 0 1 2 3 (XWIDE) octaves.
-  - **WAVE** 0-15 plays four sines (as POLY SIN's), 16-127 ENS's saw (0 %) to pulse (100 %); PW, CHRL,
+  - **WAVE** 0-15 plays four sines (0.20: by a recurrence on the EMAC, restarted from the sine table every
+    chunk), 16-127 ENS's saw (0 %) to pulse (100 %); PW, CHRL,
     CHRW and ENS's fixed +4 / -4 / +7 cent spread are ENS's. With MAJ, CLOSE and a saw, CHORDS plays what
     ENS plays at PCH +4 +7 +12.
+  - **Cost** (0.20, tests/emu_mono.py): saws about 1,240 instructions a voice a block, sines 2,320, the
+    chorus about 1,000 more; the notes' steps are kept in the voice while the note and chord stay.
   - **Checks** (tests/mono_signal.py): every TYPE x INV x SPRD gives its notes; sine chords put partials
     at them with no harmonics; WAVE saw / square; the level of ENS. ENS itself is 0.18's, sample for sample.
 - **POLY SIN** (0.13) is MONO SIN three times, in one voice (paraphonic: one filter and amp envelope):

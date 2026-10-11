@@ -48,7 +48,7 @@ enum {
 #define MONO_CHO_LEN 512            /* the ENS chorus delay line, samples (10.7 ms); a power of two */
 #define MONO_INC_MAX 0x40000000u    /* 12 kHz: the highest fundamental the oscillators play         */
 
-/* One voice's state. Zero it once (or call mono_init); mono_trig starts a note. 1,120 bytes: 96 of 32-bit
+/* One voice's state. Zero it once (or call mono_init); mono_trig starts a note. 1,176 bytes: 96 of 32-bit
  * words and bytes, then the chorus line (16-bit) or MACRO's state, which share their memory: a voice plays
  * one machine at a time, and the one it turns to starts that part afresh (own). */
 struct mono_voice {
@@ -72,6 +72,12 @@ struct mono_voice {
         int16_t  dl[MONO_CHO_LEN];  /* ENS (and the machines but MACRO): chorus delay line            */
         struct macro_voice macro;   /* MACRO: the engine playing and its state                       */
     };
+    /* after the chorus line, so that the line's samples stay within an 8-bit displacement of the voice
+     * (the ColdFire's indexed addressing): CHORDS' notes, kept while the note and chord stay */
+    uint32_t ch_inc;                /* CHORDS: the note's step and chord (key) its io were made for    */
+    uint32_t ch_key;
+    uint32_t ch_io[4];              /* CHORDS: the four oscillators' steps, the ensemble spread in     */
+    int32_t  ch_kp[4], ch_sw[4];    /* CHORDS: their sines' 2 - 2 cos w (Q29) and sin w (Q30)          */
 };
 
 /* Clear a voice. */

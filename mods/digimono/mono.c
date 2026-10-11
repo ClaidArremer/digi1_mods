@@ -7,6 +7,49 @@
 #include "mono.h"
 #include "mono_tables.h"
 
+/* The EMAC (CHORDS' sines): fractional, truncating, ACC0 only; saved and put back around its use, as
+ * macro.c does (the firmware's audio code uses the unit). A PC build computes the same in 64-bit C. */
+#if defined(__mcoldfire__)
+static inline int32_t fmac1(int32_t a, int32_t x)                              /* a x / 2^31, rounded */
+{
+    int32_t r, h = 32768;
+    __asm__ volatile ("mac.l %1,%2,%%acc0\n\tmac.l %3,%3,%%acc0\n\tmovclr.l %%acc0,%0"
+                      : "=d"(r) : "r"(a), "r"(x), "r"(h));
+    return r;
+}
+static inline int32_t fmac1t(int32_t a, int32_t x)                             /* a x / 2^31, truncated */
+{
+    int32_t r;
+    __asm__ volatile ("mac.l %1,%2,%%acc0\n\tmovclr.l %%acc0,%0" : "=d"(r) : "r"(a), "r"(x));
+    return r;
+}
+struct emac_save { int32_t macsr, acc0, ext01; };
+static inline void emac_enter(struct emac_save *e)
+{
+    int32_t z = 0;
+    __asm__ volatile ("move.l %%macsr,%0\n\tmove.l %%acc0,%1\n\tmove.l %%accext01,%2\n\t"
+                      "move.l #0x20,%%macsr\n\tmove.l %3,%%acc0\n\tmove.l %3,%%accext01"
+                      : "=&d"(e->macsr), "=&d"(e->acc0), "=&d"(e->ext01) : "d"(z));
+}
+static inline void emac_leave(const struct emac_save *e)
+{
+    __asm__ volatile ("move.l %0,%%acc0\n\tmove.l %1,%%accext01\n\tmove.l %2,%%macsr"
+                      : : "d"(e->acc0), "d"(e->ext01), "d"(e->macsr));
+}
+#else
+static inline int32_t fmac1(int32_t a, int32_t x)
+{
+    return (int32_t)(((((int64_t)a * x) >> 23) + 128) >> 8);
+}
+static inline int32_t fmac1t(int32_t a, int32_t x)
+{
+    return (int32_t)((((int64_t)a * x) >> 23) >> 8);
+}
+struct emac_save { int32_t unused; };
+static inline void emac_enter(struct emac_save *e) { (void)e; }
+static inline void emac_leave(const struct emac_save *e) { (void)e; }
+#endif
+
 #define CHO_MASK   (MONO_CHO_LEN - 1)
 #define CHO_BASE   (336 << 8)               /* chorus centre delay, 7 ms, Q8 samples  */
 #define CHO_DEPTH  120                      /* chorus swing at CHRW 127, samples      */
@@ -459,9 +502,34 @@ static inline __attribute__((always_inline)) void ens_loop(struct mono_voice *v,
     *d0p = d0;
 }
 
-/* The four oscillators at io[0..3] (ENS, CHORDS): saws, or with k saw - k * (saw a duty later), or with
- * sine four sines; summed, then the chorus. p: PW (p[4]), CHRL (p[5]), CHRW (p[6]). */
-static void ens_core(struct mono_voice *v, const uint8_t *p, uint32_t *io, int32_t k, int sine, int16_t *out, int n)
+/* A fixed ensemble spread, +4, -4 and +7 cents: oscillators at one pitch beat slowly instead of locking
+ * into a comb whose timbre would depend on the phases they started at. */
+static void ens_spread(uint32_t *io)
+{
+    io[1] = scale_up(io[1], 152);
+    io[2] = scale_down(io[2], 152);
+    io[3] = scale_up(io[3], 265);
+}
+
+/* The chorus's settings for a block of n samples: its level gc, the make-up gain nc, the delay at the start
+ * d0 and its glide dd (Q8 samples); the LFO moves on by n. */
+static inline __attribute__((always_inline)) void cho_setup(struct mono_voice *v, const uint8_t *p, int n,
+        int32_t *gc, int32_t *nc, int32_t *d0, int32_t *dd)
+{
+    int32_t sw = (lin(p[6]) * CHO_DEPTH) >> 7;      /* chorus swing, Q8 samples */
+    int32_t d1;
+    *gc = MONO_GAIN[p[5]];
+    *nc = (1 << 30) / (32768 + *gc);                /* dry + chorus within +-1 */
+    /* the chorus delay at the start and the end of the block; the samples between glide */
+    *d0 = CHO_BASE + ((((tri(v->lfo) << 1) - 32767) * sw) >> 15);
+    v->lfo += CHO_RATE * (uint32_t)n;
+    d1 = CHO_BASE + ((((tri(v->lfo) << 1) - 32767) * sw) >> 15);
+    *dd = n == 32 ? (d1 - *d0) / 32 : (d1 - *d0) / n;  /* the usual block: a shift */
+}
+
+/* The four oscillators at io[0..3], the ensemble spread in (ENS, CHORDS): saws, or with k saw - k * (saw a
+ * duty later); summed, then the chorus. p: PW (p[4]), CHRL (p[5]), CHRW (p[6]). */
+static __attribute__((noinline)) void ens_core(struct mono_voice *v, const uint8_t *p, uint32_t *io, int32_t k, int16_t *out, int n)
 {
     uint32_t o = (uint32_t)duty(p[4]);
     int32_t gc = MONO_GAIN[p[5]], i;
@@ -470,11 +538,6 @@ static void ens_core(struct mono_voice *v, const uint8_t *p, uint32_t *io, int32
     int32_t sw = (lin(p[6]) * CHO_DEPTH) >> 7;      /* chorus swing, Q8 samples */
     int32_t d0, d1, dd;
     uint16_t wr = v->wr;
-    /* A fixed ensemble spread, +4, -4 and +7 cents: oscillators at one pitch beat slowly instead of
-     * locking into a comb whose timbre would depend on the phases they started at. */
-    io[1] = scale_up(io[1], 152);
-    io[2] = scale_down(io[2], 152);
-    io[3] = scale_up(io[3], 265);
     /* the chorus delay at the start and the end of the block; the samples between glide */
     d0 = CHO_BASE + ((((tri(v->lfo) << 1) - 32767) * sw) >> 15);
     v->lfo += CHO_RATE * (uint32_t)n;
@@ -485,27 +548,6 @@ static void ens_core(struct mono_voice *v, const uint8_t *p, uint32_t *io, int32
      * by a cycle where one wraps, with the blep of the samples beside a wrap (x 4096, as the ramp's
      * 16-bit value) added in: both as changes in h (steps(), as SAW's). Within 3 of the saws added one
      * by one (16-bit). */
-    while (sine && n > 0) {                         /* CHORDS' sines: as POLY SIN's, four */
-        int c = n < CHUNK ? n : CHUNK, j;
-        uint32_t q0 = v->ph[0], q1 = v->ph[1], q2 = v->ph[2], q3 = v->ph[3];
-        for (j = 0; j < c; j++) {
-            int32_t dry = (sini(q0) + sini(q1) + sini(q2) + sini(q3)) >> 2;
-            q0 += io[0]; q1 += io[1]; q2 += io[2]; q3 += io[3];
-            v->dl[wr] = sat16(dry);
-            if (gc) {
-                int32_t di = d0 >> 8, fr = d0 & 255;
-                int32_t sa = v->dl[(wr - di) & CHO_MASK], sb = v->dl[(wr - di - 1) & CHO_MASK];
-                int32_t wet = sa + (((sb - sa) * fr) >> 8);
-                dry = ((dry + ((wet * gc) >> 15)) * (nc >> 1)) >> 14;
-            }
-            out[j] = sat16(dry);
-            wr = (wr + 1) & CHO_MASK;
-            d0 += dd;
-        }
-        v->ph[0] = q0; v->ph[1] = q1; v->ph[2] = q2; v->ph[3] = q3;
-        out += c;
-        n -= c;
-    }
     while (n > 0) {
         int c = n < CHUNK ? n : CHUNK, j;
         int32_t h1[CHUNK + 2], h2[CHUNK + 2];
@@ -556,7 +598,8 @@ static void render_ens(struct mono_voice *v, const uint8_t *p, uint32_t inc, int
         int32_t s = (int32_t)p[i - 1] - 63;        /* PCH: 63 = the same pitch */
         io[i] = interval(inc, s < -36 ? -36 : s > 36 ? 36 : s);
     }
-    ens_core(v, p, io, lin(p[3]), 0, out, n);
+    ens_spread(io);
+    ens_core(v, p, io, lin(p[3]), out, n);
 }
 
 /* ---- POLY SIN: three sines at set notes, with a pitch envelope ---------------------------------- *
@@ -697,16 +740,116 @@ void mono_chord_notes(const uint8_t *p, int32_t *t)
         t[i] += 12 * chord_sp[s][i];
 }
 
+/* CHORDS' four sines (WAVE 0..15), then the chorus as ENS's. Each sine by the recurrence y[n+1] = 2 y[n]
+ * - y[n-1] - kp y[n], kp = 2 - 2 cos w: one multiply (EMAC) a sample, restarted every chunk from the sine
+ * table at its phase (y[0] = sin q, y[-1] = sin q cos w - cos q sin w), so it is the table's sine with no
+ * drift. The states are 2^13 x the table's (Q28). The EMAC is on (render_chord). */
+#define SIN_STEP(Y, Z) (Y = 2 * Z - Y - (fmac1t(kp, Z) << 2))
+static void chord_sines(struct mono_voice *v, const uint8_t *p, const uint32_t *io, int16_t *out, int n)
+{
+    int32_t gc, nc, d0, dd, i;
+    uint16_t wr = v->wr;
+    cho_setup(v, p, n, &gc, &nc, &d0, &dd);
+    while (n > 0) {
+        int c = n < CHUNK ? n : CHUNK, j;
+        int32_t acc[CHUNK];
+        for (i = 0; i < 4; i++) {
+            uint32_t q = v->ph[i];
+            int32_t kp = v->ch_kp[i], b = sini(q) << 13, a, *o = acc, *e = acc + c - 1;
+            a = b - (fmac1t(b, kp) << 1) - (fmac1t(sini(q + 0x40000000u) << 13, v->ch_sw[i]) << 1);
+            if (i == 0) {
+                for (*o++ = b; o < e; o += 2) {
+                    o[0] = SIN_STEP(a, b);
+                    o[1] = SIN_STEP(b, a);
+                }
+                if (o == e)
+                    *o = SIN_STEP(a, b);
+            } else {
+                for (*o++ += b; o < e; o += 2) {
+                    o[0] += SIN_STEP(a, b);
+                    o[1] += SIN_STEP(b, a);
+                }
+                if (o == e)
+                    *o += SIN_STEP(a, b);
+            }
+            v->ph[i] = q + (uint32_t)c * io[i];
+        }
+        if (gc) {
+            for (j = 0; j < c; j++) {
+                int32_t dry = sat16(acc[j] >> 15), di = d0 >> 8, fr = d0 & 255, sa, sb, wet;
+                v->dl[wr] = (int16_t)dry;
+                sa = v->dl[(wr - di) & CHO_MASK];
+                sb = v->dl[(wr - di - 1) & CHO_MASK];
+                wet = sa + (((sb - sa) * fr) >> 8);
+                out[j] = sat16(((dry + ((wet * gc) >> 15)) * (nc >> 1)) >> 14);
+                wr = (wr + 1) & CHO_MASK;
+                d0 += dd;
+            }
+        } else {
+            for (j = 0; j < c; j++) {
+                int16_t dry = sat16(acc[j] >> 15);
+                v->dl[wr] = dry;
+                out[j] = dry;
+                wr = (wr + 1) & CHO_MASK;
+            }
+            d0 += dd * c;
+        }
+        out += c;
+        n -= c;
+    }
+    v->wr = wr;
+}
+#undef SIN_STEP
+
+/* For a sine stepping d a sample (w = 2 pi d / 2^32): kp = 2 - 2 cos w = 4 sin^2(w / 2), Q29, and sin w,
+ * Q30. sin and cos of x = w / 2 by their series in x^2 (Q30, on the EMAC), so kp keeps its relative
+ * precision at low notes, where w is small: the recurrence's pitch is right to a hundredth of a cent. */
+#define Q30(x) ((int32_t)((x) * 1073741824.0 + 0.5))
+static void sine_coefs(uint32_t d, int32_t *kp, int32_t *sw)
+{
+    int32_t x, u, t, c;
+    if (d > 0x48000000u)                            /* (x < 0.89: within Q31) */
+        d = 0x48000000u;
+    x = fmac1((int32_t)d, Q30(1.5707963267948966)) << 1;   /* pi d / 2^32, Q31 */
+    u = fmac1(x, x);
+    t = Q30(1.0) - fmac1(u, Q30(1.0 / 72));          /* sin x / x */
+    t = Q30(1.0) - (fmac1(fmac1(u, Q30(1.0 / 42)), t) << 1);
+    t = Q30(1.0) - (fmac1(fmac1(u, Q30(1.0 / 20)), t) << 1);
+    t = Q30(1.0) - (fmac1(fmac1(u, Q30(1.0 / 6)), t) << 1);
+    c = Q30(1.0) - fmac1(u, Q30(1.0 / 56));          /* cos x */
+    c = Q30(1.0) - (fmac1(fmac1(u, Q30(1.0 / 30)), c) << 1);
+    c = Q30(1.0) - (fmac1(fmac1(u, Q30(1.0 / 12)), c) << 1);
+    c = Q30(1.0) - (fmac1(fmac1(u, Q30(1.0 / 2)), c) << 1);
+    t = fmac1(x, t) << 1;                           /* h = sin x, Q31 */
+    *kp = fmac1(t, t);                              /* 4 h^2, Q29 */
+    *sw = fmac1(t, c) << 1;                         /* sin w = 2 h cos x, Q30 */
+}
+
 static void render_chord(struct mono_voice *v, const uint8_t *p, uint32_t inc, int16_t *out, int n)
 {
-    uint32_t io[4];
+    struct emac_save es;
+    uint32_t io[4], key = 0x8000u | (uint32_t)mono_chord_type(p[0]) | (uint32_t)(p[1] >> 5) << 5 | (uint32_t)(p[2] >> 5) << 7;
     int32_t t[4], w = p[3];
     int i;
-    mono_chord_notes(p, t);
+    emac_enter(&es);
+    if (v->ch_key != key || v->ch_inc != inc) {    /* the notes' steps: again only when the note or chord moves */
+        mono_chord_notes(p, t);
+        for (i = 0; i < 4; i++)
+            v->ch_io[i] = shift_inc(inc, t[i] * 128);
+        ens_spread(v->ch_io);
+        for (i = 0; i < 4; i++)
+            sine_coefs(v->ch_io[i], &v->ch_kp[i], &v->ch_sw[i]);
+        v->ch_key = key;
+        v->ch_inc = inc;
+    }
     for (i = 0; i < 4; i++)
-        io[i] = shift_inc(inc, t[i] * 128);
+        io[i] = v->ch_io[i];
     /* WAVE: 0..15 sines, 16..127 saw (0 %) to pulse (100 %), as ENS's WAVE */
-    ens_core(v, p, io, w < 16 ? 0 : lin(((w - 16) * 127 + 55) / 111), w < 16, out, n);
+    if (w < 16)
+        chord_sines(v, p, io, out, n);
+    else
+        ens_core(v, p, io, lin(((w - 16) * 127 + 55) / 111), out, n);
+    emac_leave(&es);
 }
 
 /* ---- VO: a formant voice ------------------------------------------------------------------------ *

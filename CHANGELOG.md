@@ -3,6 +3,24 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## Digi Mono 0.20: CHORDS lighter (HW: not yet)
+- **The chord's notes are worked out once**, not every block: the four oscillators' steps (the chord, its
+  inversion and spread, the ensemble spread) are kept in the voice and made again only when the note or
+  TYPE / INV / SPRD move. Saws: 1,602 -> 1,239 instructions a block (-23 %).
+- **The sines run on the EMAC**: each by the recurrence y[n+1] = 2 y[n] - y[n-1] - kp y[n] (one multiply
+  a sample instead of a table read and an interpolation), restarted every chunk from the sine table at its
+  phase, so it never drifts; kp from sin / cos series, right in pitch to a hundredth of a cent at the
+  lowest notes. Sines: 3,544 -> 2,315 (-35 %); with the chorus 4,536 -> 3,346 (-26 %). The sines now
+  differ from 0.19's by at most 3 of 32768 (error -75 dB under the signal at worst); no harmonics
+  (-113 dB).
+- **The chorus** (CHORDS and MONO ENS) stays as it was: running it as its own pass, or with one multiply
+  less, saved at most 2 % and the second changed ENS's samples. MONO ENS and every other machine: 0.19's
+  samples, bit for bit (2,700 random voices); CHORDS with saws too.
+- The voice's CHORDS fields sit after the chorus line, where the line keeps its short addressing (placed
+  before it, they made MONO ENS 9 % slower). Mod memory: about 9 KB left in a build with every mod here.
+- In digiemu on OS 1.54 (build 2.1h, FAST AUDIO on): CHORDS with sines and chorus, CHORDS with saws, and
+  MONO ENS with its chorus play bit for bit their own output, and the master carries the chord's notes.
+
 ## Digi Mono 0.19: CHORDS, a chord machine with type, inversion and spread (HW: not yet)
 - **New machine CHORDS** (id 28, after MACRO in the FUNC+SRC list): four oscillators as a chord on the
   note. **B TYPE** one of 24 chords (triads, sixths, sevenths, ninths, quartal, fifths, octaves, unison),
