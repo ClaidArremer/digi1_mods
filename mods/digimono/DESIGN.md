@@ -17,6 +17,7 @@ after the Monomachine's GND and SWAVE machines:
 | `MONO ENS`   | SWAVE-ENS  | four oscillators at set intervals, saw..pulse, with a chorus |
 | `MONO VO`    | VO-6       | a formant voice: vowel 1 gliding to vowel 2, consonants at the note's start |
 | `POLY SIN`   | (GND-SIN)  | three sines at set notes (a chord on one track), with a pitch envelope |
+| `CHORDS`     | (SWAVE-ENS) | four oscillators as a chord: type, inversion, spread; sines or ENS's saw..pulse and chorus |
 | `MACRO`      | (Plaits)   | engines ported from Plaits, the engine on knob B: see MACRO.md (not clean-room: MIT-licensed code) |
 
 They are picked like any machine: FUNC+SRC, after SLICE. A Digi Mono track needs no sample. Its trigs,
@@ -97,6 +98,19 @@ What each parameter does, as this engine reads the manual:
   can lose its fundamental.
 - **WAVE** (ENS) fades from saw (0) to pulse (127). **CHRL / CHRW** are the chorus level and width: a
   7 ms delay swung by up to +-2.5 ms at 0.6 Hz.
+- **CHORDS** (0.19) is MONO ENS's four oscillators (or four sines) set to a chord on the note:
+  - **TYPE** picks one of 24 chords of four notes, 5 or 6 values each (MAJ 0 4 7 12, MIN 0 3 7 12, SUS2,
+    SUS4, DIM, AUG, MAJ6, MIN6, MAJ7 0 4 7 11, MIN7, DOM7, MMAJ7, M7B5, DIM7, 7SUS4, ADD9 0 4 7 14, MADD9,
+    MAJ9 0 4 11 14, MIN9, DOM9, QUART 0 5 10 15, FIFTH 0 7 12 19, OCT 0 0 12 12, UNI 0 0 0 0). A triad
+    doubles its root an octave up.
+  - **INV** (32 values a step): that many of the lowest notes go up an octave, ROOT to 3RD.
+  - **SPRD** (32 values a step): the voicing opens. From the lowest note up, the notes are raised by
+    0 0 0 0 (CLOSE), 0 0 1 1 (OPEN), 0 1 1 2 (WIDE) or 0 1 2 3 (XWIDE) octaves.
+  - **WAVE** 0-15 plays four sines (as POLY SIN's), 16-127 ENS's saw (0 %) to pulse (100 %); PW, CHRL,
+    CHRW and ENS's fixed +4 / -4 / +7 cent spread are ENS's. With MAJ, CLOSE and a saw, CHORDS plays what
+    ENS plays at PCH +4 +7 +12.
+  - **Checks** (tests/mono_signal.py): every TYPE x INV x SPRD gives its notes; sine chords put partials
+    at them with no harmonics; WAVE saw / square; the level of ENS. ENS itself is 0.18's, sample for sample.
 - **POLY SIN** (0.13) is MONO SIN three times, in one voice (paraphonic: one filter and amp envelope):
   - **NOT1..NOT3** put the three sines in semitones from the note, 63 = the note, -36..+36 (ENS's PCH).
     At their defaults (all the note) the three are in phase and the machine is MONO SIN, sample for sample
@@ -132,7 +146,7 @@ What each parameter does, as this engine reads the manual:
 
 ## How it sits in the firmware (OS 1.53; details in docs/TECHNICAL_NOTES.md)
 
-- **Machines:** seven descriptors in core 2.1's `core_machines`, ids 20..26 (POLY SIN 26), clear of NEIGHBOR / POLY (4),
+- **Machines:** nine descriptors in core 2.1's `core_machines`, ids 20..28 (POLY SIN 26, MACRO 27, CHORDS 28), clear of NEIGHBOR (4), POLY (6),
   DIGISLICER (5) and SOPHIE (7). They have `params` = ONESHOT and `render` = ONESHOT, and digimono
   recognises its voices through core's `core_track_machine`.
 - **Audio:** the voice loop `0x400757fe` resamples each voice's sample, 64 samples at 96 kHz. A half-band

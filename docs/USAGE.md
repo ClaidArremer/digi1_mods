@@ -145,9 +145,9 @@ One page, one band per column (bands 1-4 = knobs A/E, B/F, C/G, D/H):
   after a while.
 - A band at 0 dB (bell/shelf) costs nothing; four active bands cost about 5 % of the audio time (see RISKS.md).
 
-## Digi Mono (elekloader mod `digimono`, 0.18; needs digichain 1.6, ticked with it)
+## Digi Mono (elekloader mod `digimono`, 0.19; needs digichain 1.6, ticked with it)
 - **Pick a machine:** FUNC+SRC on an audio track, then scroll past SLICE (and past any other mod's machines):
-  MONO SIN, MONO NOISE, MONO SAW, MONO PULSE, MONO ENS, MONO VO, POLY SIN, MACRO. YES to confirm. The track needs no sample.
+  MONO SIN, MONO NOISE, MONO SAW, MONO PULSE, MONO ENS, MONO VO, POLY SIN, MACRO, CHORDS. YES to confirm. The track needs no sample.
 - **MACRO** plays engines ported from Plaits: **B ENGN** the engine, in zones of 8: WSHAPE (0-7), 2OP FM
   (8-15), NOISE (16-23), PARTCL (24-31), BDRUM (32-39), SNARE (40-47), HIHAT (48-55), GRAIN (56-63 and up).
   **C HARM**, **D TIMB**, **E MORP** are Plaits' HARMONICS, TIMBRE, MORPH (F, G, H unused: since 0.18
@@ -170,6 +170,7 @@ One page, one band per column (bands 1-4 = knobs A/E, B/F, C/G, D/H):
   | ENS   | PCH2 (semitones) | PCH3 | PW (duty %, 0 = square) | PCH4 | WAVE (saw..pulse, %) | CHRL (chorus level) | CHRW (chorus width) |
   | VO    | VOC1 (vowel: OO U AW AH UH AE EH IH EE ER) | VOC2 | VOIC (breath) | V-SW (glide VOC1 -> VOC2; 0 = VOC1 only) | CONS (- S SH F H T K P) | CLEN (ms) | CVOL (consonant level) |
   | POLY SIN | NOT1 (semitones from the note) | NOT2 | NOT3 | EDEP (pitch envelope depth, semitones, +/-) | ESPD (its speed: + glides back to the notes, - glides away; OFF) | - | - |
+  | CHORDS | TYPE (24 chords: MAJ ... UNI) | INV (ROOT, 1ST, 2ND, 3RD) | PW (duty %, 0 = square) | SPRD (CLOSE, OPEN, WIDE, XWIDE) | WAVE (SINE, then saw..pulse %) | CHRL (chorus level) | CHRW (chorus width) |
 
   The volume is the track's: LEVEL, the AMP page and VOL. D does not open the sample list on these machines.
 

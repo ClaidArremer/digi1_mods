@@ -24,13 +24,13 @@ the machine's knob names), knob turns; RECORD, trigs on steps 1, 5, 9 and 13 of 
      TUNE path, the knob mapping and the start detection;
   5. the master output carries it: the fundamental of the master mix is the note's.
 """
-import argparse, collections, math, os, struct, sys, time, types, wave, zlib
+import argparse, collections, ctypes, math, os, struct, sys, time, types, wave, zlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser()
 ap.add_argument("--digiemu", required=True)
 ap.add_argument("--fw", required=True)
-ap.add_argument("--machine", default="SAW", choices=["SIN", "NOIS", "SAW", "PULS", "ENS", "VO", "PSIN", "MACRO"])
+ap.add_argument("--machine", default="SAW", choices=["SIN", "NOIS", "SAW", "PULS", "ENS", "VO", "PSIN", "MACRO", "CHORD"])
 ap.add_argument("--knobs", default="", help="knob turns, e.g. B:+20,E:-5 (notches)")
 ap.add_argument("--png", default="")
 ap.add_argument("--wav", default="")
@@ -65,10 +65,11 @@ KNOBS = "BCEFGHD"                                   # Digi Mono's knobs (digimon
 SLOTS = [18, 19, 21, 22, 23, 24, 20]
 DEFAULTS = [[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 40, 0, 0, 0, 0, 0], [0, 40, 0, 64, 0, 40, 0],
             [63, 63, 63, 0, 0, 127, 0], [43, 113, 64, 0, 40, 100, 0], [63, 63, 64, 64, 0, 0, 63],
-            [0, 64, 64, 0, 0, 0, 64]]
+            [0, 64, 64, 0, 0, 0, 64], [0, 0, 0, 16, 0, 127, 0]]
 KNOB_P = [[-1] * 7, [0, 1, 2, -1, -1, -1, -1], [0, 1, 2, 4, 5, 6, -1], [0, 1, 2, 4, 5, 6, 3],
-          [0, 1, 2, 3, 5, 6, 4], [0, 1, 2, 4, 5, 6, 3], [0, 1, 3, 4, -1, -1, 2], [0, 1, 3, 4, -1, -1, 2]]
-MACH_FIRST = 20                                     # digimono machine ids: 20..27
+          [0, 1, 2, 3, 5, 6, 4], [0, 1, 2, 4, 5, 6, 3], [0, 1, 3, 4, -1, -1, 2], [0, 1, 3, -1, -1, -1, 2],
+          [0, 1, 2, 3, 5, 6, 4]]
+MACH_FIRST = 20                                     # digimono machine ids: 20..28
 TURNS = []
 for s in filter(None, a.knobs.split(",")):
     k, n = s.split(":")
@@ -308,7 +309,7 @@ for i, (sb, note, words, samples, mb, amp) in enumerate(blocks):
     for i, j in enumerate(KNOB_P[MODEL]):
         if j >= 0:
             p[j] = k[i]
-    if MODEL == H.ENS:                               # PW on D: 0 = square .. 127 = thinnest
+    if MODEL in (H.ENS, H.CHORD):                    # PW on D: 0 = square .. 127 = thinnest
         p[4] = 64 + (p[4] >> 1)
     pitch = note + ((words[0] - 16384) << 8)
     x = e.render(32, inc=H.LIB.mono_pitch_inc(pitch >> 9), params=p)
@@ -346,6 +347,15 @@ if len(seg) == 48000 and np.max(np.abs(seg)) > 0:
         lv = [near(261.63 * 2 ** (x / 12), 25) for x in want]
         check(all(v > -30 for v in lv), "the master mix has C4 and the PCH intervals %s: %s dB"
               % (want[1:], ["%.1f" % v for v in lv]))
+    elif MODEL == H.CHORD:                     # the chord's four notes from C4 (mono_chord_notes)
+        _, kk = knobs.get("turned", knobs["defaults"])
+        pc = (ctypes.c_uint8 * 7)(kk[0], kk[1], kk[2], kk[3], 0, 0, 0)
+        tt = (ctypes.c_int32 * 4)()
+        H.LIB.mono_chord_notes(pc, tt)
+        want = sorted(set(tt))
+        lv = [near(261.63 * 2 ** (x / 12), 25) for x in want]
+        check(all(v > -30 for v in lv), "the master mix has the chord's notes %s st from C4: %s dB"
+              % (want, ["%.1f" % v for v in lv]))
     elif MODEL == H.PSIN:                      # the three sines at their NOT1..3 intervals from C4
         _, kk = knobs.get("turned", knobs["defaults"])
         want = sorted(set(max(-36, min(36, kk[i] - 63)) for i in range(3)))

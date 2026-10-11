@@ -12,8 +12,8 @@ SRC = os.path.join(ROOT, "mods", "digimono", "mono.c")
 SRC_MACRO = os.path.join(ROOT, "mods", "digimono", "macro.c")
 FS = 48000
 BLOCK = 32                                  # frames in one render block of the Digitakt
-SIN, NOIS, SAW, PULS, ENS, VO, PSIN, MACRO = range(8)
-NAMES = ["SIN", "NOIS", "SAW", "PULS", "ENS", "VO", "PSIN", "MACRO"]
+SIN, NOIS, SAW, PULS, ENS, VO, PSIN, MACRO, CHORD = range(9)
+NAMES = ["SIN", "NOIS", "SAW", "PULS", "ENS", "VO", "PSIN", "MACRO", "CHORD"]
 # struct mono_voice (mono.h): 11 32-bit words, a 16-bit word, 2 bytes, a byte and 3 spare, 11 32-bit words
 # (VO, PSIN), then a part the chorus line (16-bit) and MACRO's state (struct macro_voice, macro.h: four
 # bytes, then 32-bit words) share. The same layout on the ColdFire (big-endian) and on this PC

@@ -16,6 +16,8 @@ same samples) and checks, with numbers printed:
   VO           the formants of three vowels; VOC1 -> VOC2 by V-SW; a consonant at the start; pitch; level
   PSIN         NOT1..3 at the note = MONO SIN; as a chord, three pure partials at their intervals; the
                range; EDEP / ESPD: a pitch glide down from EDEP (decay), up to it (rise), off at 64
+  CHORD        TYPE / INV / SPRD: every chord's four notes; partials at them (sines), saws (WAVE); ENS's
+               sound on the same notes
   all          random settings and pitches: bounded, no DC, block size makes no difference
 """
 import math, os, random, sys
@@ -23,7 +25,8 @@ import math, os, random, sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from mono_lib import FS, SIN, NOIS, SAW, PULS, ENS, VO, PSIN, NAMES, Engine, play, pitch_inc, note_hz
+import ctypes
+from mono_lib import FS, SIN, NOIS, SAW, PULS, ENS, VO, PSIN, CHORD, NAMES, Engine, play, pitch_inc, note_hz, LIB
 
 FAIL = []
 
@@ -281,11 +284,62 @@ def main():
     t = [hz_at(play(PSIN, [63, 63, 63, 76, sp, 0, 0], 69, 0.2), 0.05) for sp in (70, 100, 127)]
     check(t[0] > t[1] > t[2] * 0.999, "further from 64 is faster: at 50 ms %.0f / %.0f / %.0f Hz" % tuple(t))
 
+    print("CHORD")
+    IV = [[0, 4, 7, 12], [0, 3, 7, 12], [0, 2, 7, 12], [0, 5, 7, 12], [0, 3, 6, 12], [0, 4, 8, 12],
+          [0, 4, 7, 9], [0, 3, 7, 9], [0, 4, 7, 11], [0, 3, 7, 10], [0, 4, 7, 10], [0, 3, 7, 11],
+          [0, 3, 6, 10], [0, 3, 6, 9], [0, 5, 7, 10], [0, 4, 7, 14], [0, 3, 7, 14], [0, 4, 11, 14],
+          [0, 3, 10, 14], [0, 4, 10, 14], [0, 5, 10, 15], [0, 7, 12, 19], [0, 0, 12, 12], [0, 0, 0, 0]]
+    SP = [[0, 0, 0, 0], [0, 0, 1, 1], [0, 1, 1, 2], [0, 1, 2, 3]]
+    def notes(ty, inv, sp):
+        t = list(IV[ty])
+        for _ in range(inv):
+            t = sorted(t[1:] + [t[0] + 12])
+        return [x + 12 * o for x, o in zip(t, SP[sp])]
+    bad = []
+    for v in range(128):                        # TYPE: 24 chords over 0..127; INV, SPRD: 4 steps of 32
+        for iv in (0, 31, 32, 64, 96, 127):
+            for sv in (0, 32, 64, 127):
+                tt = (ctypes.c_int32 * 4)()
+                LIB.mono_chord_notes((ctypes.c_uint8 * 7)(v, iv, sv, 0, 0, 0, 0), tt)
+                if list(tt) != notes(v * 24 // 128, iv // 32, sv // 32):
+                    bad.append((v, iv, sv, list(tt)))
+    check(not bad, "TYPE / INV / SPRD give each chord's notes, inverted and spread (%d wrong%s)"
+          % (len(bad), ", first %s" % (bad[0],) if bad else ""))
+    tt = (ctypes.c_int32 * 4)()
+    LIB.mono_chord_notes((ctypes.c_uint8 * 7)(9 * 128 // 24 + 1, 32, 0, 0, 0, 0, 0), tt)
+    check(list(tt) == [3, 7, 10, 12], "MIN7, 1st inversion: +3 +7 +10 +12 (%s)" % list(tt))
+    LIB.mono_chord_notes((ctypes.c_uint8 * 7)(0, 0, 127, 0, 0, 0, 0), tt)
+    check(list(tt) == [0, 16, 31, 48], "MAJ, XWIDE: 0 +16 +31 +48 (%s)" % list(tt))
+    f0 = note_hz(48)
+    for ty, inv, sp in ((0, 0, 0), (9, 1, 0), (8, 2, 2), (23, 0, 0)):
+        prm = [ty * 128 // 24 + 1, inv * 32, sp * 32, 0, 64, 0, 0]          # WAVE 0: sines, no chorus
+        x = play(CHORD, prm, 48, 1.5)[FS // 2:]
+        nt = notes(ty, inv, sp)
+        det = [0, 4, -4, 7]                       # the ensemble's fixed detune, cents (mono.c ens_core)
+        want = [f0 * 2 ** (n / 12 + d / 1200) for n, d in zip(nt, det)]
+        if ty == 23:                              # UNI: four sines within 11 cents: one partial
+            worst = abs(cents(peak_hz(x, f0 * 0.98, f0 * 1.02), f0))
+            check(worst < 8, "UNI: one note, the four detuned around it (%.1f cents)" % worst)
+            continue
+        lv = [band_db(x, w, 2.0) for w in sorted(set(want))]
+        check(min(lv) > -12, "%s %s %s, sines: partials at %s st from C3 (weakest %.1f dB)"
+              % (["MAJ", "", "", "", "", "", "", "", "MAJ7", "MIN7"][ty] or ty, ["ROOT", "1ST", "2ND"][inv],
+                 ["CLOSE", "OPEN", "WIDE"][sp], nt, min(lv)))
+        other = max(band_db(x, w * k, 2.0) for w in want for k in (2, 3) if all(abs(w * k - u) > 6 for u in want))
+        check(other < -60, "  no harmonics with sines (strongest %.1f dB)" % other)
+    x = play(CHORD, [0, 0, 0, 16, 64, 0, 0], 48, 1.5)[FS // 2:]                 # WAVE 16: saws
+    check(band_db(x, 3 * f0, 2.0) > -25, "WAVE 16: saws (3rd harmonic of the root %.1f dB)" % band_db(x, 3 * f0, 2.0))
+    lv = 20 * math.log10(np.std(x) / np.std(play(ENS, [67, 70, 75, 0, 64, 0, 0], 48, 1.5)[FS // 2:]))
+    check(abs(lv) < 3, "WAVE 16, MAJ: level %.1f dB against ENS at PCH +4 +7 +12" % lv)
+    x = play(CHORD, [23 * 128 // 24 + 1, 0, 0, 127, 64, 0, 0], 48, 1.5)[FS // 2:]   # UNI, WAVE 127: squares
+    h2, h3 = band_db(x, 2 * f0, 12.0), band_db(x, 3 * f0, 12.0)
+    check(h2 < h3 - 20, "WAVE 127 (UNI): squares, the 2nd harmonic %.1f dB under the 3rd" % (h3 - h2))
+
     print("all machines, random settings")
     rnd = random.Random(1)
     worst_dc = 0
-    for i in range(120):
-        m = rnd.randrange(7)
+    for i in range(150):
+        m = rnd.choice([0, 1, 2, 3, 4, 5, 6, 8])
         prm = [rnd.randrange(128) for _ in range(7)]
         note = rnd.uniform(36, 120)
         x = play(m, prm, note, 1.0)

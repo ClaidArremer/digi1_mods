@@ -3,6 +3,20 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## Digi Mono 0.19: CHORDS, a chord machine with type, inversion and spread (HW: not yet)
+- **New machine CHORDS** (id 28, after MACRO in the FUNC+SRC list): four oscillators as a chord on the
+  note. **B TYPE** one of 24 chords (triads, sixths, sevenths, ninths, quartal, fifths, octaves, unison),
+  **C INV** the inversion (ROOT to 3RD), **E SPRD** the spread (CLOSE, OPEN, WIDE, XWIDE: up to three
+  octaves), **F WAVE** sines (0-15) or saw to pulse; **D PW**, **G CHRL**, **H CHRW** as on MONO ENS.
+  Each knob shows its value by name (MIN7, 1ST, WIDE, SINE).
+- **Cost:** with saws about MONO ENS's (1,600 to 3,800 instructions a block), with sines 3,500 to 4,600;
+  2 KB more code (about 10.6 KB of mod memory left in a build with every mod here).
+- **Checks:** tests/mono_signal.py (every TYPE x INV x SPRD gives its notes; partials at them; saw, square,
+  level); tests/emu_mono.py (the ColdFire build equals the PC build, now with CHORDS); every other machine
+  is 0.18's, sample for sample (1,600 random voices).
+- In digiemu on OS 1.54 (build 2.1g, FAST AUDIO on): CHORDS with saws (MIN9) and with sines and chorus
+  (MIN6) plays bit for bit its own output, and the master carries the chord's notes.
+
 ## Digi Mono 0.18: MACRO plays Plaits' main output only; 10.5 KB of mod memory freed (HW: not yet)
 - **MACRO's second output (AUX) is gone**, and with it knob F's OUT/AUX crossfade: the synthetic kick and
   snare, the ring-modulated hi-hat, GRAIN's Z oscillator, FM's sub-oscillator, WSHAPE's second fold,

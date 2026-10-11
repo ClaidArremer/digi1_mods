@@ -16,7 +16,8 @@ your OS file from your own official one.
 - **Digi Mono**: seven synth machines in the FUNC+SRC list (sine, noise, saw, pulse, an ensemble, a formant
   voice, and POLY SIN: three sines, a chord on one track), each with its own icon and its own SRC page,
   values in their units; and **MACRO**: eight engines ported from Plaits (waveshaping, 2-op FM, noise,
-  particles, kick, snare, hi-hat, grains), the engine on knob B, so p-locks can change it per step.
+  particles, kick, snare, hi-hat, grains), the engine on knob B, so p-locks can change it per step; and
+  **CHORDS**: four oscillators as a chord, with chord type, inversion and spread on their own knobs.
 - **Digi Matrix**: any track's LFO to any parameter of any track, 8 slots, per pattern.
 - **Digi Utilities**: waveform, spectrum and X-Y scope, a tuner and track activity, on a held "...".
 - **Digi EQ**: a 4-band master EQ on every output, main outs, headphones and USB.
@@ -38,7 +39,7 @@ your OS file from your own official one.
 
 | mod | what it adds | version | hardware |
 |---|---|---|---|
-| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN, and MACRO (Plaits' engines) | 0.18 | not yet tested |
+| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN, MACRO (Plaits' engines) and CHORDS | 0.19 | not yet tested |
 | [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0c | not yet tested |
 | [Digi Utilities](#digi-utilities) (`digiutils`) | waveform, spectrum and X-Y pages, tuner, track activity | 1.9a | stand-alone 1.5d confirmed |
 | [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0c | not yet tested |
@@ -66,7 +67,7 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
 
 ## Digi Mono
 
-**Digi Mono** (elekloader mod `digimono`, 0.18, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and MACRO
+**Digi Mono** (elekloader mod `digimono`, 0.19, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and MACRO
 - **Seven new machines in the FUNC+SRC list**, each with its own icon: **MONO SIN**, **MONO NOISE** (sample and
   hold, red noise), **MONO SAW** (unison, two sub-oscillators), **MONO PULSE** (PWM, unison, subs), **MONO ENS**
   (four oscillators at set intervals, saw to pulse, chorus), **MONO VO** (a formant voice: vowel to vowel,
@@ -77,6 +78,11 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
   (p-lockable: it switches on the trig), C / D / E are HARMONICS / TIMBRE / MORPH. Each engine plays
   Plaits' main output; 0.18 dropped its second (AUX) output, which freed about 10.5 KB of mod memory. Each engine is checked
   against Plaits' own code; [mods/digimono/MACRO.md](mods/digimono/MACRO.md).
+- **CHORDS** (0.19): a chord on one track. **B TYPE** picks one of 24 chords (MAJ, MIN, SUS2, SUS4, DIM,
+  AUG, MAJ6, MIN6, MAJ7, MIN7, DOM7, MMAJ7, M7B5, DIM7, 7SUS4, ADD9, MADD9, MAJ9, MIN9, DOM9, QUART, FIFTH,
+  OCT, UNI), **C INV** its inversion (ROOT, 1ST, 2ND, 3RD), **E SPRD** its spread (CLOSE, OPEN, WIDE,
+  XWIDE: the voicing opened over up to three octaves). **F WAVE** is sines (0-15) or saw to pulse, and
+  D / G / H are pulse width and chorus, as on MONO ENS. All three chord knobs can be p-locked per step.
 - **Their own SRC page**: knobs B-H are the machine's parameters, named and shown in their own units
   (semitones, %, ms, vowels, consonants). A stays TUNE; D is a parameter too (no sample list), and the
   volume is the track's LEVEL and AMP page.

@@ -25,6 +25,7 @@ enum {
     MONO_VO   = 5,      /* VO-6        a formant voice: vowel 1 -> vowel 2, consonants              */
     MONO_PSIN = 6,      /* (GND-SIN)   three sines at set notes, a pitch envelope: POLY SIN         */
     MONO_MACRO = 7,     /* MACRO       engines ported from Plaits (macro.c); knob B picks one         */
+    MONO_CHORD = 8,     /* CHORDS      four oscillators as a chord: type, inversion, spread; ENS's sound */
     MONO_MACHINES
 };
 
@@ -40,6 +41,7 @@ enum {
  *   VO       VOC1  VOC2  V-SW  VOIC  CONS  CLEN  CVOL
  *   PSIN     NOT1  NOT2  NOT3  EDEP  ESPD  -     -
  *   MACRO    ENGN  HARM  TIMB  MORP  -     -     -     (macro.h)
+ *   CHORD    TYPE  INV   SPRD  WAVE  PW    CHRL  CHRW
  */
 #define MONO_PARAMS 7
 
@@ -87,5 +89,11 @@ void mono_render(struct mono_voice *v, int machine, const uint8_t *p, uint32_t i
 /* The phase increment of a pitch in 1/128 semitone, MIDI note 0 = 0 (note 60 = 7680 = middle C),
  * clamped to MONO_INC_MAX. */
 uint32_t mono_pitch_inc(int32_t pitch);
+
+/* CHORDS: the chord type knob TYPE's value -> 0..23, the types' names; the four notes of p (semitones
+ * from the played note, low to high) */
+int mono_chord_type(int v);
+extern const char *const mono_chord_name[24];
+void mono_chord_notes(const uint8_t *p, int32_t *t);
 
 #endif

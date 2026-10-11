@@ -2,7 +2,7 @@
  *
  * digimono_blocks() runs once a render block, after the voice loop has left each voice's 32 Q31 samples at
  * 0x80001a18 + 128 v and before the filter, amp envelope and mixer stages work on them. For every voice
- * playing one of our machines (core_track_machine 20..27; they render as ONESHOT) it writes the engine's
+ * playing one of our machines (core_track_machine 20..28; they render as ONESHOT) it writes the engine's
  * block there, so the voice's filter, amp envelope, VOL, LFOs, sends and level follow as for a sample. Firmware addresses are OS 1.53's; how each was found: docs/TECHNICAL_NOTES.md.
  */
 
@@ -33,7 +33,7 @@
 /* the UI and the per-block glue: built for size (the samples are made in mono.c and macro.c) */
 #pragma GCC optimize("Os", "no-tree-loop-distribute-patterns")
 
-#define MACH_FIRST   20                      /* digimono_m20..m27 in glue.s: SIN NOIS SAW PULS ENS VO PSIN MACRO */
+#define MACH_FIRST   20                      /* digimono_m20..m28 in glue.s: SIN NOIS SAW PULS ENS VO PSIN MACRO CHORDS */
 extern volatile uint8_t core_track_machine[8];                  /* core 2.1: the machine each voice plays */
 #define VOICE_MACH   core_track_machine
 #define VOICE_START  (*(volatile const uint32_t *)0x80001228) /* bit v: voice v (re)started this block */
@@ -61,6 +61,7 @@ static const int8_t knob_p[MONO_MACHINES][KNOBS] = {
     { 0,  1,  2,  4,  5,  6,  3},       /* VO    VOC1 VOC2 V-SW CONS CLEN CVOL, D VOIC    */
     { 0,  1,  3,  4, -1, -1,  2},       /* PSIN  NOT1 NOT2 EDEP ESPD, D NOT3              */
     { 0,  1,  3, -1, -1, -1,  2},       /* MACRO ENGN HARM MORP, D TIMB                   */
+    { 0,  1,  2,  3,  5,  6,  4},       /* CHORD TYPE INV SPRD WAVE CHRL CHRW, D PW       */
 };
 
 struct digimono_voice {
@@ -89,7 +90,7 @@ static void params(int v, int model, uint8_t *p)
         w = word(v, knob_slot[i]) >> 8;
         p[j] = w < 0 ? 0 : w > 127 ? 127 : (uint8_t)w;
     }
-    if (model == MONO_ENS)                  /* PW on D: 0 = square (the engine's 64) .. 127 = thinnest */
+    if (model == MONO_ENS || model == MONO_CHORD)   /* PW on D: 0 = square (the engine's 64) .. 127 = thinnest */
         p[4] = (uint8_t)(64 + (p[4] >> 1));
 }
 
@@ -198,6 +199,7 @@ static const char *const sname[MONO_MACHINES][KNOBS] = {
     {"VOC1", "VOC2", "V-SW", "CONS", "CLEN", "CVOL", "VOIC"},
     {"NOT1", "NOT2", "EDEP", "ESPD", "-",    "-",    "NOT3"},
     {"ENGN", "HARM", "MORP", "-",    "-",    "-",    "TIMB"},
+    {"TYPE", "INV",  "SPRD", "WAVE", "CHRL", "CHRW", "PW"},
 };
 static const char *const lname[MONO_MACHINES][KNOBS] = {
     {"-", "-", "-", "-", "-", "-", "-"},
@@ -208,10 +210,12 @@ static const char *const lname[MONO_MACHINES][KNOBS] = {
     {"Vowel 1", "Vowel 2", "Vowel Glide", "Consonant", "Cons. Length", "Cons. Level", "Breath"},
     {"Note 1", "Note 2", "Env Depth", "Env Speed", "-", "-", "Note 3"},
     {"Engine", "Harmonics", "Morph", "-", "-", "-", "Timbre"},
+    {"Chord Type", "Inversion", "Spread", "Sine-Saw-Pulse", "Chorus Level", "Chorus Width", "Pulse Width"},
 };
 
 /* how each knob's value reads */
-enum { F_NUM, F_VOICES, F_SEMI, F_PW, F_PWENS, F_VOWEL, F_CONS, F_MS, F_SHAPE, F_BIPST, F_BIPOFF, F_ENGINE };
+enum { F_NUM, F_VOICES, F_SEMI, F_PW, F_PWENS, F_VOWEL, F_CONS, F_MS, F_SHAPE, F_BIPST, F_BIPOFF, F_ENGINE,
+       F_CHORD, F_INV, F_SPRD, F_CHWAVE };
 static const uint8_t knob_fmt[MONO_MACHINES][KNOBS] = {
     {F_NUM, F_NUM, F_NUM, F_NUM, F_NUM, F_NUM, F_NUM},
     {F_NUM, F_NUM, F_NUM, F_NUM, F_NUM, F_NUM, F_NUM},
@@ -221,6 +225,7 @@ static const uint8_t knob_fmt[MONO_MACHINES][KNOBS] = {
     {F_VOWEL, F_VOWEL, F_NUM, F_CONS, F_MS, F_NUM, F_NUM},
     {F_SEMI, F_SEMI, F_BIPST, F_BIPOFF, F_NUM, F_NUM, F_SEMI},
     {F_ENGINE, F_NUM, F_NUM, F_NUM, F_NUM, F_NUM, F_NUM},
+    {F_CHORD, F_INV, F_SPRD, F_CHWAVE, F_NUM, F_NUM, F_PWENS},
 };
 
 /* The active track's Digi Mono model, or -1. */
@@ -273,7 +278,7 @@ const char *digimono_name(uint32_t id, int shortname)
  * +44, short name +48); glue.s hands those reads here with the descriptor's offset (52 id). */
 #define ONESHOT_ID_A 0x6c
 static const char *const mach_short[MONO_MACHINES] = {"MSIN", "MNOI", "MSAW", "MPLS", "MENS", "MVO", "PSIN",
-                                                      "MACR"};
+                                                      "MACR", "CHRD"};
 
 /* what: 0 the group ("SAMP"), 1 the long name, 2 the short one; stock: the firmware's own */
 const char *digimono_dest(uint32_t off, int what, const char *stock)
@@ -303,6 +308,10 @@ int digimono_range(uint32_t id, int32_t *out)
     out[2] = 0;
     return 1;
 }
+
+/* CHORDS: inversion and spread (mono.c mono_chord_notes: 32 values a step) */
+static const char *const inv_name[4] = {"ROOT", "1ST", "2ND", "3RD"};
+static const char *const sprd_name[4] = {"CLOSE", "OPEN", "WIDE", "XWIDE"};
 
 /* VO's vowels (VOC1, VOC2: the continuum of mono.c's VOWEL, nearest) and consonants (CONS: 8 zones) */
 static const char *const vowel_name[10] = {"OO", "U", "AW", "AH", "UH", "AE", "EH", "IH", "EE", "ER"};
@@ -368,6 +377,23 @@ static void text_into(int m, int k, int v, char *buf)
         break;
     case F_CONS:
         put_s(o, cons_name[v >> 4]);
+        break;
+    case F_CHORD:
+        put_s(o, mono_chord_name[mono_chord_type(v)]);
+        break;
+    case F_INV:
+        put_s(o, inv_name[v >> 5]);
+        break;
+    case F_SPRD:
+        put_s(o, sprd_name[v >> 5]);
+        break;
+    case F_CHWAVE:                          /* render_chord: 0..15 sines, then saw..pulse in % */
+        if (v < 16) {
+            put_s(o, "SINE");
+            break;
+        }
+        o = put_u(o, (uint32_t)(((v - 16) * 100 + 55) / 111));
+        put_s(o, "%");
         break;
     case F_MS:                              /* render_vo: CLEN 96 + v^2 x 1188 / 1024 samples */
         o = put_u(o, (uint32_t)((96 + ((v * v * 1188) >> 10)) / 48));
@@ -464,6 +490,7 @@ static const uint8_t mono_def[MONO_MACHINES][KNOBS] = {   /* B C E F G H D */
     {43, 113, 64, 0, 40, 100, 0},       /* VO    VOC1 (AH) VOC2 (EE) V-SW CONS CLEN CVOL, VOIC */
     {63, 63, 64, 64, 0, 0, 63},         /* PSIN  NOT1 NOT2, EDEP ESPD off, D NOT3: MONO SIN */
     {0, 64, 64, 0, 0, 0, 64},           /* MACRO ENGN (the first) HARM MORP, D TIMB    */
+    {0, 0, 0, 16, 0, 127, 0},           /* CHORD MAJ, ROOT, CLOSE, saw, chorus off, PW (square) */
 };
 
 static const uint8_t *seen_kit;

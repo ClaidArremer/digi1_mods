@@ -416,6 +416,14 @@ static void render_puls(struct mono_voice *v, const uint8_t *p, uint32_t inc, in
     }
 }
 
+/* the sine table read at phase q, linear between entries */
+static inline int32_t sini(uint32_t q)
+{
+    uint32_t x = q >> 23;
+    int32_t a = MACRO_SINE[x], b = MACRO_SINE[x + 1];
+    return a + (((b - a) * (int32_t)((q >> 7) & 0xffff)) >> 16);
+}
+
 /* ENS's sample loop over c samples: the summed ramps (and with WAVE, the ramps a duty later), the
  * level, the chorus. has_k and has_c are constants at each call, so each copy has only its own work. */
 static inline __attribute__((always_inline)) void ens_loop(struct mono_voice *v, int16_t *out, int c,
@@ -451,21 +459,17 @@ static inline __attribute__((always_inline)) void ens_loop(struct mono_voice *v,
     *d0p = d0;
 }
 
-/* one ENS oscillator, saw - k * (saw a duty later), added into acc */
-static void render_ens(struct mono_voice *v, const uint8_t *p, uint32_t inc, int16_t *out, int n)
+/* The four oscillators at io[0..3] (ENS, CHORDS): saws, or with k saw - k * (saw a duty later), or with
+ * sine four sines; summed, then the chorus. p: PW (p[4]), CHRL (p[5]), CHRW (p[6]). */
+static void ens_core(struct mono_voice *v, const uint8_t *p, uint32_t *io, int32_t k, int sine, int16_t *out, int n)
 {
-    uint32_t io[4], o = (uint32_t)duty(p[4]);
-    int32_t k = lin(p[3]), gc = MONO_GAIN[p[5]], i;
+    uint32_t o = (uint32_t)duty(p[4]);
+    int32_t gc = MONO_GAIN[p[5]], i;
     int32_t nw = (1 << 30) / (32768 + k);           /* keeps saw - k * saw' within +-1 */
     int32_t nc = (1 << 30) / (32768 + gc);          /* and dry + chorus */
     int32_t sw = (lin(p[6]) * CHO_DEPTH) >> 7;      /* chorus swing, Q8 samples */
     int32_t d0, d1, dd;
     uint16_t wr = v->wr;
-    io[0] = inc > MONO_INC_MAX ? MONO_INC_MAX : inc;
-    for (i = 1; i < 4; i++) {
-        int32_t s = (int32_t)p[i - 1] - 63;        /* PCH: 63 = the same pitch */
-        io[i] = interval(inc, s < -36 ? -36 : s > 36 ? 36 : s);
-    }
     /* A fixed ensemble spread, +4, -4 and +7 cents: oscillators at one pitch beat slowly instead of
      * locking into a comb whose timbre would depend on the phases they started at. */
     io[1] = scale_up(io[1], 152);
@@ -481,6 +485,27 @@ static void render_ens(struct mono_voice *v, const uint8_t *p, uint32_t inc, int
      * by a cycle where one wraps, with the blep of the samples beside a wrap (x 4096, as the ramp's
      * 16-bit value) added in: both as changes in h (steps(), as SAW's). Within 3 of the saws added one
      * by one (16-bit). */
+    while (sine && n > 0) {                         /* CHORDS' sines: as POLY SIN's, four */
+        int c = n < CHUNK ? n : CHUNK, j;
+        uint32_t q0 = v->ph[0], q1 = v->ph[1], q2 = v->ph[2], q3 = v->ph[3];
+        for (j = 0; j < c; j++) {
+            int32_t dry = (sini(q0) + sini(q1) + sini(q2) + sini(q3)) >> 2;
+            q0 += io[0]; q1 += io[1]; q2 += io[2]; q3 += io[3];
+            v->dl[wr] = sat16(dry);
+            if (gc) {
+                int32_t di = d0 >> 8, fr = d0 & 255;
+                int32_t sa = v->dl[(wr - di) & CHO_MASK], sb = v->dl[(wr - di - 1) & CHO_MASK];
+                int32_t wet = sa + (((sb - sa) * fr) >> 8);
+                dry = ((dry + ((wet * gc) >> 15)) * (nc >> 1)) >> 14;
+            }
+            out[j] = sat16(dry);
+            wr = (wr + 1) & CHO_MASK;
+            d0 += dd;
+        }
+        v->ph[0] = q0; v->ph[1] = q1; v->ph[2] = q2; v->ph[3] = q3;
+        out += c;
+        n -= c;
+    }
     while (n > 0) {
         int c = n < CHUNK ? n : CHUNK, j;
         int32_t h1[CHUNK + 2], h2[CHUNK + 2];
@@ -522,6 +547,18 @@ static void render_ens(struct mono_voice *v, const uint8_t *p, uint32_t inc, int
     v->wr = wr;
 }
 
+static void render_ens(struct mono_voice *v, const uint8_t *p, uint32_t inc, int16_t *out, int n)
+{
+    uint32_t io[4];
+    int i;
+    io[0] = inc > MONO_INC_MAX ? MONO_INC_MAX : inc;
+    for (i = 1; i < 4; i++) {
+        int32_t s = (int32_t)p[i - 1] - 63;        /* PCH: 63 = the same pitch */
+        io[i] = interval(inc, s < -36 ? -36 : s > 36 ? 36 : s);
+    }
+    ens_core(v, p, io, lin(p[3]), 0, out, n);
+}
+
 /* ---- POLY SIN: three sines at set notes, with a pitch envelope ---------------------------------- *
  * NOT1..NOT3 put the three sines in semitones from the note, 63 = the note itself, -36..+36 (ENS's
  * PCH). At NOT1..3 = 63 the three are in phase and the sum is MONO SIN's sine (within 1 of 32767).
@@ -560,13 +597,6 @@ static uint32_t shift_inc(uint32_t inc, int32_t e)
     return inc > MONO_INC_MAX ? MONO_INC_MAX : inc;
 }
 
-/* the sine table read at phase q, linear between entries */
-static inline int32_t sini(uint32_t q)
-{
-    uint32_t x = q >> 23;
-    int32_t a = MACRO_SINE[x], b = MACRO_SINE[x + 1];
-    return a + (((b - a) * (int32_t)((q >> 7) & 0xffff)) >> 16);
-}
 
 static void render_psin(struct mono_voice *v, const uint8_t *p, uint32_t inc, int16_t *out, int n)
 {
@@ -623,6 +653,60 @@ static void render_psin(struct mono_voice *v, const uint8_t *p, uint32_t inc, in
         n -= c;
     }
     v->env = e0;
+}
+
+/* ---- CHORDS: four oscillators as a chord: type, inversion, spread ---------------------------------- *
+ * ENS's oscillators, chorus and saw..pulse (mono.c ens_core), or four sines as POLY SIN's, set to a chord
+ * on the note instead of free intervals. TYPE (24 chords of four notes; triads double the root an octave
+ * up), INV (0..3: that many of the lowest notes go up an octave), SPRD (0..3: the voicing opens, the
+ * notes from the second lowest up raised by up to 1, 2 or 3 octaves, the highest most). */
+#define CHORD_TYPES 24
+static const int8_t chord_iv[CHORD_TYPES][4] = {
+    {0, 4, 7, 12}, {0, 3, 7, 12}, {0, 2, 7, 12}, {0, 5, 7, 12}, {0, 3, 6, 12}, {0, 4, 8, 12},
+    {0, 4, 7, 9},  {0, 3, 7, 9},  {0, 4, 7, 11}, {0, 3, 7, 10}, {0, 4, 7, 10}, {0, 3, 7, 11},
+    {0, 3, 6, 10}, {0, 3, 6, 9},  {0, 5, 7, 10}, {0, 4, 7, 14}, {0, 3, 7, 14}, {0, 4, 11, 14},
+    {0, 3, 10, 14}, {0, 4, 10, 14}, {0, 5, 10, 15}, {0, 7, 12, 19}, {0, 0, 12, 12}, {0, 0, 0, 0},
+};
+const char *const mono_chord_name[CHORD_TYPES] = {
+    "MAJ", "MIN", "SUS2", "SUS4", "DIM", "AUG",
+    "MAJ6", "MIN6", "MAJ7", "MIN7", "DOM7", "MMAJ7",
+    "M7B5", "DIM7", "7SUS4", "ADD9", "MADD9", "MAJ9",
+    "MIN9", "DOM9", "QUART", "FIFTH", "OCT", "UNI",
+};
+static const int8_t chord_sp[4][4] = {{0, 0, 0, 0}, {0, 0, 1, 1}, {0, 1, 1, 2}, {0, 1, 2, 3}};
+
+int mono_chord_type(int v)
+{
+    return (v * CHORD_TYPES) >> 7;
+}
+
+/* the four notes, semitones from the played note, low to high */
+void mono_chord_notes(const uint8_t *p, int32_t *t)
+{
+    const int8_t *iv = chord_iv[mono_chord_type(p[0])];
+    int r = p[1] >> 5, s = p[2] >> 5, i, j;
+    for (i = 0; i < 4; i++)
+        t[i] = iv[i];
+    while (r--) {                                   /* the lowest up an octave, back in order */
+        int32_t x = t[0] + 12;
+        for (j = 0; j < 3 && t[j + 1] < x; j++)
+            t[j] = t[j + 1];
+        t[j] = x;
+    }
+    for (i = 0; i < 4; i++)
+        t[i] += 12 * chord_sp[s][i];
+}
+
+static void render_chord(struct mono_voice *v, const uint8_t *p, uint32_t inc, int16_t *out, int n)
+{
+    uint32_t io[4];
+    int32_t t[4], w = p[3];
+    int i;
+    mono_chord_notes(p, t);
+    for (i = 0; i < 4; i++)
+        io[i] = shift_inc(inc, t[i] * 128);
+    /* WAVE: 0..15 sines, 16..127 saw (0 %) to pulse (100 %), as ENS's WAVE */
+    ens_core(v, p, io, w < 16 ? 0 : lin(((w - 16) * 127 + 55) / 111), w < 16, out, n);
 }
 
 /* ---- VO: a formant voice ------------------------------------------------------------------------ *
@@ -915,6 +999,7 @@ void mono_render(struct mono_voice *v, int machine, const uint8_t *p, uint32_t i
     case MONO_ENS:  render_ens(v, p, inc, out, n); break;
     case MONO_VO:   render_vo(v, p, inc, out, n); break;
     case MONO_PSIN: render_psin(v, p, inc, out, n); break;
+    case MONO_CHORD: render_chord(v, p, inc, out, n); break;
     case MONO_MACRO:
         while (n > 0) {                     /* the MACRO engines work in blocks of up to 32 */
             int k = n < 32 ? n : 32;

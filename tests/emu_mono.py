@@ -129,8 +129,8 @@ def main():
     rnd = random.Random(7)
     cases = blocks = 0
     same = kept_all = True
-    for case in range(80):
-        m = rnd.randrange(8) if case % 10 else 8                  # 8: out of range, must be silence
+    for case in range(120):
+        m = rnd.randrange(9) if case % 10 else 9                  # 9: out of range, must be silence
         cf.init()
         hv = H.Voice()
         H.LIB.mono_init(ctypes.byref(hv))
@@ -166,6 +166,8 @@ def main():
         ("ENS", H.ENS, [63, 63, 63, 0, 64, 0, 0], [67, 70, 75, 64, 64, 127, 127]),
         ("VO", H.VO, [42, 113, 64, 0, 0, 40, 100], [42, 113, 64, 64, 20, 127, 127]),
         ("PSIN", H.PSIN, [63, 63, 63, 64, 64, 0, 0], [63, 67, 70, 100, 90, 0, 0]),
+        ("CHSIN", H.CHORD, [48, 0, 0, 0, 64, 0, 0], [48, 64, 127, 0, 64, 127, 127]),
+        ("CHORD", H.CHORD, [48, 0, 0, 16, 64, 0, 0], [48, 64, 127, 100, 64, 127, 127]),
     ]
     inc = H.pitch_inc(48)
     worst = 0
