@@ -41,8 +41,8 @@ your OS file from your own official one.
 
 | mod | what it adds | version | hardware |
 |---|---|---|---|
-| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN and CHORDS | 0.22 | **confirmed** |
-| [Digi Macro](#digi-macro) (`digimacro`) | MACRO: Plaits' engines as a machine (needs Digi Mono) | 1.0 | froze on 2.1h; the fix (0.21, own render stack) not yet tested |
+| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN and CHORDS | 0.23 | **confirmed** (0.22) |
+| [Digi Macro](#digi-macro) (`digimacro`) | MACRO: Plaits' engines as a machine (needs Digi Mono) | 1.1 | **confirmed**: no freezes (1.0 with Digi Mono 0.22) |
 | [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0c | **confirmed** |
 | [Digi Utilities](#digi-utilities) (`digiutils`) | waveform, spectrum and X-Y pages, tuner, track activity | 1.9a | **confirmed** |
 | [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0c | **confirmed** |
@@ -70,7 +70,7 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
 
 ## Digi Mono
 
-**Digi Mono** (elekloader mod `digimono`, 0.22, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and CHORDS
+**Digi Mono** (elekloader mod `digimono`, 0.23, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and CHORDS
 - **Seven new machines in the FUNC+SRC list**, each with its own icon: **MONO SIN**, **MONO NOISE** (sample and
   hold, red noise), **MONO SAW** (unison, two sub-oscillators), **MONO PULSE** (PWM, unison, subs), **MONO ENS**
   (four oscillators at set intervals, saw to pulse, chorus), **MONO VO** (a formant voice: vowel to vowel,
@@ -88,8 +88,11 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
   volume is the track's LEVEL and AMP page.
 - **Tick it in elekloader** and digichain is ticked with it; it combines with every other mod here, Digi Poly
   included, and with digisophie, digineighbor and digislicer (their `-chain` builds).
-- **No lock-up under overload** (0.17): if the voices ask for more CPU than there is, Digi Mono's voices rest for
-  moments (the sound drops out) instead of the unit freezing.
+- **Under load, lighter sound before any gap** (0.23): when the render runs short of time, the machines take
+  their cheaper paths (ENS and CHORDS fade their chorus out, MACRO's 2OP FM plays new notes at 2x, PARTCL
+  fires four of its six particles) until it has been calm for 2 s. Only if that is not enough does one
+  voice rest, the heaviest, until there is room for it; every voice rests (a short dropout) only when the
+  load is not Digi Mono's. Never a lock-up (0.17).
 - **Light enough for a few tracks at once**: 0.16 made SAW and PULSE about three times lighter at full unison, ENS
   and POLY SIN 12-28 % and the MACRO engines 5-25 %; 0.10 and 0.11 made VO 16-19 % and ENS 20-29 % lighter (ENS starts with its chorus
   off, CHRL 0: the chorus is its costliest part). On a unit
@@ -104,7 +107,7 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
 
 ## Digi Macro
 
-**Digi Macro** (elekloader mod `digimacro`, 1.0, needs Digi Mono 0.22, which elekloader ticks with it) - MACRO
+**Digi Macro** (elekloader mod `digimacro`, 1.1, needs Digi Mono 0.23, which elekloader ticks with it) - MACRO
 - **MACRO** in the FUNC+SRC list (after POLY SIN): engines from **Plaits** (Emilie Gillet, MIT licence),
   ported to integer arithmetic: WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT and GRAIN. Knob B picks
   the engine in zones of 8 (p-lockable: it switches on the trig), C / D / E are HARMONICS / TIMBRE /

@@ -41,16 +41,28 @@ def check(ok, what):
         FAIL.append(what)
 
 
+def eco_stub(work):
+    """digimono_eco, Digi Mono's (mono.c), for a build of MACRO alone (in .rodata: the image is text and
+    read-only data, which the emulator maps writable)"""
+    c = os.path.join(work, "eco.c")
+    open(c, "w").write('__attribute__((section(".rodata"))) unsigned char digimono_eco = 0;\n')
+    return c
+
+
 def build_cf():
     work = tempfile.mkdtemp(prefix="macro_cf_")
     obj, elf, binf = (os.path.join(work, n) for n in ("macro.o", "macro.elf", "macro.bin"))
     subprocess.check_call(["m68k-linux-gnu-gcc"] + CFLAGS + ["-I", INC, "-c", SRC, "-o", obj])
     und = [w for w in subprocess.check_output(["m68k-linux-gnu-nm", "-u", obj], text=True).split() if w != "U"]
-    check(und == ["MACRO_SINE"], "the ColdFire object needs nothing from outside but Digi Mono's sine (undefined: %s)"
+    check(sorted(und) == ["MACRO_SINE", "digimono_eco"],
+          "the ColdFire object needs nothing from outside but Digi Mono's sine and eco flag (undefined: %s)"
           % (" ".join(und) or "none"))
     objs = obj.replace("macro.o", "sine.o")
     subprocess.check_call(["m68k-linux-gnu-gcc"] + CFLAGS + ["-c", SINE, "-o", objs])
-    subprocess.check_call(["m68k-linux-gnu-ld", "-Ttext=0x%x" % TEXT, "-e", "macro_render", "-o", elf, obj, objs])
+    obje = obj.replace("macro.o", "eco.o")
+    subprocess.check_call(["m68k-linux-gnu-gcc"] + CFLAGS + ["-c", eco_stub(work), "-o", obje])
+    subprocess.check_call(["m68k-linux-gnu-ld", "-Ttext=0x%x" % TEXT, "-e", "macro_render", "-o", elf, obj, objs,
+                           obje])
     subprocess.check_call(["m68k-linux-gnu-objcopy", "-O", "binary", elf, binf])
     syms = {}
     for line in subprocess.check_output(["m68k-linux-gnu-nm", elf], text=True).splitlines():
@@ -61,8 +73,9 @@ def build_cf():
 
 
 def build_pc():
-    so = os.path.join(tempfile.mkdtemp(prefix="macro_pc_"), "macro.so")
-    subprocess.check_call(["gcc", "-O2", "-shared", "-fPIC", "-I", INC, SRC, SINE, "-o", so])
+    work = tempfile.mkdtemp(prefix="macro_pc_")
+    so = os.path.join(work, "macro.so")
+    subprocess.check_call(["gcc", "-O2", "-shared", "-fPIC", "-I", INC, SRC, SINE, eco_stub(work), "-o", so])
     return ctypes.CDLL(so)
 
 
@@ -148,12 +161,20 @@ def main():
     print("bit-exact against the PC build")
     rnd = random.Random(11)
     same, blocks = True, 0
-    for case in range(60):
+    pc_eco = ctypes.c_uint8.in_dll(pc, "digimono_eco")
+
+    def set_eco(on):                                # Digi Mono's overload guard's flag, on both builds
+        pc_eco.value = on
+        cf.uc.mem_write(syms["digimono_eco"], bytes([on]))
+    for case in range(90):                          # the last 30 with the guard's eco flag going on and off
+        set_eco(0)
         hv = ctypes.create_string_buffer(VOICE_BYTES)
         pc.macro_init(hv)
         cf.call("macro_init", VOICE)
         prm = [knob_of(rnd.randrange(len(ENGINES)))] + [rnd.randrange(128) for _ in range(6)]
         for b in range(20):
+            if case >= 60 and rnd.random() < 0.25:
+                set_eco(rnd.randrange(2))
             if b % 7 == 0:
                 pc.macro_trig(hv)
                 cf.call("macro_trig", VOICE)
@@ -170,6 +191,7 @@ def main():
                 same = False
             blocks += 1
     check(same, "%d blocks: every sample equal to the PC build's" % blocks)
+    set_eco(0)
 
     print("cost per voice and 32-frame block (note 48; the average of 16 blocks after 4)")
     print("  %-6s %22s %22s" % ("", "light (knobs at 64)", "heavy"))
@@ -190,6 +212,21 @@ def main():
         worst = max(worst, row[1][1])
         print("  %-6s %7.0f ins %7.0f cyc  %7.0f ins %7.0f cyc  = %4.1f %% of a block's cycles"
               % (name, row[0][0], row[0][1], row[1][0], row[1][1], 100 * row[1][1] / 166667))
+        if name in ("FM", "PART"):                  # the heavy setting again, the guard's eco flag on
+            set_eco(1)
+            prm = [knob_of(e), 127, 127, 127, 0, 0, 0]
+            cf.call("macro_init", VOICE)
+            cf.call("macro_trig", VOICE)
+            for _ in range(4):
+                cf.render(prm, pitch_inc(48), 32)
+            ins = cyc = 0
+            for _ in range(16):
+                cf.render(prm, pitch_inc(48), 32, count=True)
+                ins += cf.count
+                cyc += cf.cycles
+            set_eco(0)
+            print("  %-6s %22s %7.0f ins %7.0f cyc  = %4.1f %% (eco)" % ("", "", ins / 16, cyc / 16,
+                                                                        100 * cyc / 16 / 166667))
     print()
     if FAIL:
         print("%d FAILED" % len(FAIL))

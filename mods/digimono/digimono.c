@@ -72,6 +72,10 @@ struct digimono_voice {
     uint8_t live;
     uint8_t quiet;                          /* blocks the amp envelope has been silent; QUIET_BLOCKS: asleep */
     uint8_t mach;                           /* the machine it last played (an id; 0: none yet)        */
+    uint8_t strikes;                        /* times the guard has rested it since the render was calm */
+    uint16_t rest;                          /* blocks left in which it rests (the overload guard)      */
+    uint16_t cost;                          /* its last block's time, DTIM ticks (the guard)           */
+    uint16_t want;                          /* resting: the time its block took before                 */
 };
 
 /* A machine's knobs: Digi Mono's own (tables below) or another mod's (its struct digimono_ext). */
@@ -84,7 +88,7 @@ struct kinfo {
 };
 static int kinfo_of(int id, struct kinfo *k);
 static struct digimono_voice voices[8];
-static int shed;                            /* blocks left in which the voices rest (the overload guard) */
+static int shed;                            /* blocks left in which every voice rests (the overload guard) */
 
 static int16_t word(int v, int slot)
 {
@@ -154,7 +158,7 @@ static void digimono_block(int v)
         if (d->quiet >= QUIET_BLOCKS)
             return;                         /* asleep: the stock block is silence already */
     }
-    if (shed)
+    if (shed || d->rest)
         return;                             /* the CPU is overloaded: rest (see the overload guard) */
     /* the pitch as the render computes a sample's: the note plus TUNE (after the LFOs), in Q16 semitones */
     pitch = VOICE_NOTE[v] + ((int32_t)(word(v, SLOT_TUNE) - 16384) << 8);
@@ -172,36 +176,96 @@ static void digimono_block(int v)
  * two renders, the next one starts at once, the UI never runs again (no knob, no key release reaches the
  * firmware) and the outputs repeat their last buffers: a freeze only a power cycle ends. So each render is
  * timed (core's ev_render_in / ev_render_out, DTIM0: core starts it free-running at the 132 MHz bus clock;
- * a 32-frame render period at 48 kHz is 88,000 ticks). Three renders in a row over 94 % of the period (a
- * single long one is a spike, not an overload) make the Digi Mono voices rest for the next SHED_BLOCKS
- * blocks (their blocks stay the stock silence, their state waits), which gives the CPU back. The sound
- * drops out for a moment instead of the unit locking up. */
+ * a 32-frame render period at 48 kHz is 88,000 ticks), and so is each Digi Mono voice's block. In steps:
+ *   1. eco: a render over 7/8 of the period sets digimono_eco: the machines take their cheaper paths (ENS
+ *      and CHORDS fade their chorus out; MACRO's 2OP FM starts its notes at 2x instead of 4x, PARTCL
+ *      fires four of its six particles). Two seconds of renders under 5/8 of the period end it.
+ *   2. one voice: three renders in a row over 94 % (a single long one is a spike, not an overload) rest the
+ *      voice whose block took longest (its block stays the stock silence, its state waits): 32 ms, twice as
+ *      long each time again (up to 1 s) until the render is calm, and after that until the render has
+ *      room for its block again (no blips of a voice that does not fit). The other voices play on.
+ *   3. every voice: twelve renders in a row over 94 % (the load is not Digi Mono's, or resting voices
+ *      did not help) rest them all for 16 ms, which gives the CPU back: a dropout instead of a freeze. */
 #define DTCN0        (*(volatile const uint32_t *)0xFC07000C)
 #define RENDER_TICKS 88000u
+#define ECO_LIMIT    (RENDER_TICKS - RENDER_TICKS / 8)
+#define CALM_LIMIT   (RENDER_TICKS * 5 / 8)
+#define CALM_BLOCKS  3000                       /* 2 s */
 #define SHED_LIMIT   (RENDER_TICKS - RENDER_TICKS / 16)
+#define REST_BLOCKS  48                         /* 32 ms, doubled with each strike */
+#define REST_STRIKES 5                          /* up to 1 s */
 #define SHED_BLOCKS  24                         /* 16 ms */
 static uint32_t rin_t;
 static int over;                                /* renders over the limit in a row */
-uint32_t digimono_overloads;                    /* renders over the limit since power-on (diagnostics) */
+static int calm;                                /* renders under CALM_LIMIT in a row */
+uint32_t digimono_overloads;                    /* voices rested since power-on (diagnostics) */
 
 void digimono_rin(void)
 {
     rin_t = DTCN0;
 }
 
+/* rest the voice whose last block took longest; 0 if none is playing */
+static int rest_heaviest(void)
+{
+    struct digimono_voice *h = 0;
+    int v;
+    for (v = 0; v < 8; v++) {
+        struct digimono_voice *d = &voices[v];
+        if (!d->rest && d->cost > 400 && (!h || d->cost > h->cost))   /* (400: a voice asleep) */
+            h = d;
+    }
+    if (!h)
+        return 0;
+    h->rest = (uint16_t)(REST_BLOCKS << h->strikes);
+    h->want = h->cost;
+    if (h->strikes < REST_STRIKES)
+        h->strikes++;
+    digimono_overloads++;
+    return 1;
+}
+
 void digimono_rout(void)
 {
     uint32_t dur = DTCN0 - rin_t;
-    if (dur > SHED_LIMIT && dur < 0x80000000u) {
-        if (++over >= 3) {
-            shed = SHED_BLOCKS;
-            digimono_overloads++;
+    int v;
+    if (dur >= 0x80000000u)
+        dur = 0;
+    if (dur > ECO_LIMIT) {
+        digimono_eco = 1;
+        calm = 0;
+    } else if (dur < CALM_LIMIT) {
+        if (++calm >= CALM_BLOCKS) {
+            calm = 0;
+            digimono_eco = 0;
+            for (v = 0; v < 8; v++)
+                voices[v].strikes = 0;
         }
     } else {
-        over = 0;
+        calm = 0;
     }
-    if (shed && over < 3)
-        shed--;
+    if (dur > SHED_LIMIT) {
+        ++over;
+        if (over >= 12) {
+            shed = SHED_BLOCKS;
+            over = 0;
+            digimono_overloads++;
+        } else if (over % 3 == 0) {
+            rest_heaviest();
+        }
+    } else {
+        int back = 0;                           /* one voice back a render, if there is room for it */
+        over = 0;
+        if (shed)
+            shed--;
+        for (v = 0; v < 8; v++) {
+            struct digimono_voice *d = &voices[v];
+            if (d->rest > 1)
+                d->rest--;
+            else if (d->rest && !back && dur + d->want < SHED_LIMIT)
+                d->rest = 0, back = 1;
+        }
+    }
 }
 
 /* The render's own stack (glue.s digimono_rblock): the engines' deepest calls take about 2 KB (MACRO's
@@ -213,8 +277,12 @@ __asm__(".globl digimono_stack_top\n\t.set digimono_stack_top, digimono_stack + 
 void digimono_blocks(void)
 {
     int v;
-    for (v = 0; v < 8; v++)
+    for (v = 0; v < 8; v++) {
+        uint32_t t = DTCN0;
         digimono_block(v);
+        t = DTCN0 - t;
+        voices[v].cost = (uint16_t)(t > 0xffffu ? 0xffffu : t);
+    }
 }
 
 /* ---- the SRC page ------------------------------------------------------------------------------- */

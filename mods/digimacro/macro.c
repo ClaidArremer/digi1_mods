@@ -575,12 +575,13 @@ static void fm_init(struct macro_fm *f)
     f->os4 = 0;
 }
 
-/* At a note start: 4x for a note with feedback (MORPH off its middle), 2x without. Chosen per note, so a
- * MORPH turned during a note keeps the note's rate (no switch, no click); a p-lock lands on a trig. */
+/* At a note start: 4x for a note with feedback (MORPH off its middle), 2x without, and 2x while the render
+ * is short of time (digimono_eco). Chosen per note, so a MORPH turned during a note, or the guard, keeps
+ * the note's rate (no switch, no click); a p-lock lands on a trig. */
 static COLD void fm_trig(struct macro_fm *f, const uint8_t *p)
 {
     int32_t fb = k16(p[MACRO_P_MORPH]) - 32768;
-    f->os4 = fb > 1024 || fb < -1024;
+    f->os4 = (fb > 1024 || fb < -1024) && !digimono_eco;     /* eco: 2x, half the work */
 }
 
 /* the half-band decimator: x[] holds six samples of history and then 2n new ones; out[i] is centred on
@@ -859,6 +860,8 @@ static NOINL void noise_render(struct macro_noise *__restrict z, uint32_t *__res
  * impulse instead of every sample), and a particle whose band-pass has rung out and has no impulse in
  * the block is skipped. */
 
+#define MACRO_PARTICLES_ECO 4                               /* the particles that fire under eco */
+
 static void particles_init(struct macro_particles *z)
 {
     int i;
@@ -920,7 +923,7 @@ static NOINL void particle_render(struct macro_voice *__restrict m, const uint8_
     int32_t acc[32];
     struct coef k;
     struct svf_c kp;
-    int sync = z->sync;
+    int sync = z->sync, eco = digimono_eco;
     z->sync = 0;
 
     /* density: NoteToFrequency(60 + 72 TIMBRE^2)^2 / 6 an impulse a sample; pd: Q26 */
@@ -946,12 +949,14 @@ static NOINL void particle_render(struct macro_voice *__restrict m, const uint8_
         int fresh = 1;
         if (sync)
             q->e = 0;
-        /* the first impulse this block, if any */
+        /* the first impulse this block, if any (eco: the last two particles fire none, they ring out) */
         at = q->e < pd * n ? q->e / pd : n;
-        if (at >= n) {
-            q->e -= pd * n;
+        if (at >= n || (eco && j >= MACRO_PARTICLES_ECO)) {
+            if (at >= n)
+                q->e -= pd * n;
             if (!q->s1 && !q->s2)
                 continue;                                       /* silent: nothing to compute */
+            at = n;
         }
         f.s1 = q->s1;
         f.s2 = q->s2;

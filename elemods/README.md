@@ -16,12 +16,12 @@ and Digi Macro (MACRO) ticks Digi Mono.
 | `digifilter-1.0i.elemod` | `acfb71cc7719d93d` |
 | `digihealth-1.0-os1.54.elemod` | `b8a49c1137fb3f2a` |
 | `digihealth-1.0.elemod` | `aba9413ee205e136` |
-| `digimacro-1.0-os1.54.elemod` | `8feaa23baaa25d55` |
-| `digimacro-1.0.elemod` | `a3df077fa6c6c64b` |
+| `digimacro-1.1-os1.54.elemod` | `cfb07c31450ce02c` |
+| `digimacro-1.1.elemod` | `9cc981a5eb7f1ce0` |
 | `digimatrix-1.0c-os1.54.elemod` | `ce04490838836956` |
 | `digimatrix-1.0c.elemod` | `dc2c9d32dde13e75` |
-| `digimono-0.22-os1.54.elemod` | `d7a3045a8339fd16` |
-| `digimono-0.22.elemod` | `bfe583344c7d1b04` |
+| `digimono-0.23-os1.54.elemod` | `5750fcaf0699fd16` |
+| `digimono-0.23.elemod` | `6b8b9b62bbc32216` |
 | `digineighbor-0.6-chain-os1.54.elemod` | `49fbcabbab7a8f7d` |
 | `digineighbor-0.6-chain.elemod` | `4621ed88a23c86a6` |
 | `digipoly-2.0a-os1.54.elemod` | `d374422cd1a95b25` |

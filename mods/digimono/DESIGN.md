@@ -301,6 +301,25 @@ a unit** with digihealth's SYSTEM INFO. Eight heavy ones would overload it. Ways
 - **skipping silent voices** (done in 0.7): not rendering a voice whose amp envelope has closed (the envelope is applied
   after the filter stage and has not been located yet).
 
+## The overload guard (0.17; in steps since 0.23)
+
+Each render is timed (core's ev_render_in / ev_render_out, DTIM0 at the 132 MHz bus clock: 88,000 ticks a
+32-frame period), and so is each voice's block. 0.17 rested every Digi Mono voice for 16 ms whenever three
+renders in a row went over 94 % of the period. Under a load just over that line it did so again and again:
+the voices sounded for a few blocks out of every 27 (heard on a unit with two Digi Mono tracks, a MACRO
+track and samples). 0.23 steps through cheaper ways first:
+
+| step | when | what |
+|---|---|---|
+| eco (`digimono_eco`) | a render over 7/8 of the period; until 2 s of renders under 5/8 | ENS and CHORDS fade their chorus out over 8 blocks (the line is still written and the LFO moves, so it fades back in without a jump; the dry part keeps its level); MACRO's 2OP FM starts its notes at 2x instead of 4x (a note keeps its rate); PARTCL fires four of its six particles |
+| one voice | 3 renders in a row over 94 % | the voice whose block took longest rests: 32 ms, doubled each time again until the render is calm (up to 1 s), then until the render has room for the block it took (so a voice that does not fit does not come back for blips) |
+| every voice | 12 renders in a row over 94 % | 16 ms, as 0.17: the load is not Digi Mono's |
+
+With eco off every machine's output is 0.22's, bit for bit. Saved by eco, a voice a block (instructions,
+tests/emu_mono.py and emu_macro.py; heavy settings): ENS 3,186 -> 2,321, CHORDS sines 3,355 -> 2,457,
+CHORDS saw 3,425 -> 2,570; MACRO 2OP FM with feedback 16,700 -> 9,300 cycles (10.0 -> 5.6 % of a block),
+PARTCL 16,200 -> 12,900 (9.7 -> 7.8 %). tests/guard_sim.py runs the guard's own code under made-up loads.
+
 ## The Digitakt's pages on a Digi Mono track (0.5, tests/digiemu_mono_fx.py)
 
 0.3 wrote the engine's block right after the resampler (0x4007606e). Measured at the codec output

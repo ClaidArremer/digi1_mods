@@ -350,7 +350,7 @@ cmd_elemods() {   # every mod as an .elemod, in one folder, with which pairs com
         esac
         cp "$f" "$out/" && ok+=("$out/$(basename "$f")") && echo "  $(basename "$f")"
     done
-    say "which pairs combine (elekloader --check, with core, and digichain for the chained builds)"
+    say "which pairs combine (elekloader --check, with core, the mods they require, and digichain for the chained builds)"
     local core chain i j a b with
     core=$(ls "$out"/core-*.elemod)
     chain=$(ls "$out"/digichain-*.elemod 2>/dev/null | head -1 || true)
@@ -359,9 +359,35 @@ cmd_elemods() {   # every mod as an .elemod, in one folder, with which pairs com
         for ((j = i + 1; j < ${#ok[@]}; j++)); do
             a=${ok[i]}; b=${ok[j]}
             with=(--mod "$core")
-            if [[ -n $chain && ( $a$b == *-chain.elemod* || $a$b == *-chain-os* || $a$b == */digimono-* || $a$b == */digipoly-* ) && $a != "$chain" && $b != "$chain" ]]; then
+            if [[ -n $chain && ( $a$b == *-chain.elemod* || $a$b == *-chain-os* || $a$b == */digimono-* || $a$b == */digipoly-* || $a$b == */digimacro-* ) && $a != "$chain" && $b != "$chain" ]]; then
                 with+=(--mod "$chain")
             fi
+            local r   # the mods a or b require (Digi Macro: Digi Mono), from this folder
+            while IFS= read -r r; do
+                [[ -n $r && $r != "$a" && $r != "$b" && $r != "$chain" ]] && with+=(--mod "$r")
+            done < <(python3 - "$out" "$a" "$b" <<'PY'
+import glob, json, os, sys
+out, mods = sys.argv[1], sys.argv[2:]
+have = {}
+for f in glob.glob(os.path.join(out, "*.elemod")):
+    try:
+        have.setdefault(json.load(open(f)).get("id"), f)
+    except (OSError, ValueError):
+        pass
+need, todo = [], list(mods)
+while todo:
+    try:
+        reqs = json.load(open(todo.pop())).get("requires", [])
+    except (OSError, ValueError):
+        continue
+    for r in reqs:
+        f = have.get(r)
+        if r != "core" and f and f not in mods and f not in need:
+            need.append(f)
+            todo.append(f)
+print("\n".join(need))
+PY
+)
             if PYTHONPATH=$TOOLS/elekloader python3 -m elekloader.patch --stock "$STOCK" "${with[@]}" \
                     --mod "$a" --mod "$b" --check > "$LOG/pair.log" 2>&1; then
                 echo "ok      $(basename "$a") + $(basename "$b")" >> "$out/COMPATIBILITY.txt"
@@ -369,7 +395,7 @@ cmd_elemods() {   # every mod as an .elemod, in one folder, with which pairs com
                 echo "TOO BIG $(basename "$a") + $(basename "$b"): $(grep -o 'need RAM.*' "$LOG/pair.log" | head -1)" \
                     >> "$out/COMPATIBILITY.txt"
             else
-                echo "CLASH   $(basename "$a") + $(basename "$b"): $(grep -E 'overlap|claim|both|conflict' "$LOG/pair.log" | head -1 | sed 's/^ *//')" \
+                echo "CLASH   $(basename "$a") + $(basename "$b"): $( { grep -E 'overlap|claim|both|conflict|requires' "$LOG/pair.log" || grep REFUSED "$LOG/pair.log"; } | head -1 | sed 's/^ *//')" \
                     >> "$out/COMPATIBILITY.txt"
             fi
         done

@@ -51,6 +51,9 @@ static inline void emac_leave(const struct emac_save *e) { (void)e; }
 #endif
 
 #define CHO_MASK   (MONO_CHO_LEN - 1)
+#define CHO_FADE   8                        /* blocks the chorus takes to fade out or back in (eco) */
+
+uint8_t digimono_eco;
 #define CHO_BASE   (336 << 8)               /* chorus centre delay, 7 ms, Q8 samples  */
 #define CHO_DEPTH  120                      /* chorus swing at CHRW 127, samples      */
 #define CHO_RATE   53687u                   /* chorus LFO, 0.6 Hz                     */
@@ -468,7 +471,7 @@ static inline int32_t sini(uint32_t q)
 static inline __attribute__((always_inline)) void ens_loop(struct mono_voice *v, int16_t *out, int c,
         uint16_t *wrp, int32_t *d0p, int32_t dd, uint32_t r1, uint32_t s1, const int32_t *h1,
         uint32_t r2, uint32_t s2, const int32_t *h2, int32_t k, int32_t nw, int32_t gc,
-        int32_t nc, const int has_k, const int has_c)
+        int32_t nc, const int has_k, const int has_c, const int has_g)
 {
     uint16_t wr = *wrp;
     int32_t d0 = *d0p, j;
@@ -480,6 +483,8 @@ static inline __attribute__((always_inline)) void ens_loop(struct mono_voice *v,
             r2 += s2 + (uint32_t)h2[j];
             x -= ((((int32_t)r2 >> 12) - 4 * 32768) * (k >> 2)) >> 13;   /* 4 saws: 2^17 */
             dry = ((x >> 2) * (nw >> 1)) >> 14;
+        } else if (has_g) {
+            dry = ((x >> 2) * (nw >> 1)) >> 14;     /* the chorus faded out (eco): the dry part's level */
         } else {
             dry = x >> 2;                           /* nw = 2^15 without WAVE */
         }
@@ -507,6 +512,22 @@ static void ens_spread(uint32_t *io)
     io[3] = scale_up(io[3], 265);
 }
 
+/* The chorus's level gc as the overload guard leaves it: while digimono_eco it fades out over CHO_FADE
+ * blocks, then fades back in. The line is still written and the LFO still moves, so it returns without a
+ * jump; the dry part keeps the level the chorus's make-up gain gives it. */
+static inline int32_t cho_eco(struct mono_voice *v, int32_t gc)
+{
+    int f = v->cho_fade;
+    if (digimono_eco) {
+        if (f < CHO_FADE)
+            f++;
+    } else if (f) {
+        f--;
+    }
+    v->cho_fade = (uint8_t)f;
+    return f ? (gc * (CHO_FADE - f)) >> 3 : gc;
+}
+
 /* The chorus's settings for a block of n samples: its level gc, the make-up gain nc, the delay at the start
  * d0 and its glide dd (Q8 samples); the LFO moves on by n. */
 static inline __attribute__((always_inline)) void cho_setup(struct mono_voice *v, const uint8_t *p, int n,
@@ -528,9 +549,9 @@ static inline __attribute__((always_inline)) void cho_setup(struct mono_voice *v
 static __attribute__((noinline)) void ens_core(struct mono_voice *v, const uint8_t *p, uint32_t *io, int32_t k, int16_t *out, int n)
 {
     uint32_t o = (uint32_t)duty(p[4]);
-    int32_t gc = MONO_GAIN[p[5]], i;
+    int32_t g0 = MONO_GAIN[p[5]], gc = cho_eco(v, g0), i;
     int32_t nw = (1 << 30) / (32768 + k);           /* keeps saw - k * saw' within +-1 */
-    int32_t nc = (1 << 30) / (32768 + gc);          /* and dry + chorus */
+    int32_t nc = (1 << 30) / (32768 + g0);          /* and dry + chorus */
     int32_t sw = (lin(p[6]) * CHO_DEPTH) >> 7;      /* chorus swing, Q8 samples */
     int32_t d0, d1, dd;
     uint16_t wr = v->wr;
@@ -567,17 +588,21 @@ static __attribute__((noinline)) void ens_core(struct mono_voice *v, const uint8
         }
         r1 -= s1;                                   /* the loop steps first */
         r2 -= s2;
-        /* one copy of the sample loop for each of WAVE on / off and chorus on / off */
+        /* one copy of the sample loop for each of WAVE on / off and chorus on / off (or faded out by
+         * eco: the dry part at the chorus's make-up gain, nc in nw) */
         if (k) {
             if (gc)
-                ens_loop(v, out, c, &wr, &d0, dd, r1, s1, h1, r2, s2, h2, k, nw, gc, nc, 1, 1);
+                ens_loop(v, out, c, &wr, &d0, dd, r1, s1, h1, r2, s2, h2, k, nw, gc, nc, 1, 1, 0);
             else
-                ens_loop(v, out, c, &wr, &d0, dd, r1, s1, h1, r2, s2, h2, k, nw, gc, nc, 1, 0);
+                ens_loop(v, out, c, &wr, &d0, dd, r1, s1, h1, r2, s2, h2, k,
+                         g0 ? (int32_t)(((uint32_t)nw * (uint32_t)nc) >> 15) : nw, gc, nc, 1, 0, 0);
         } else {
             if (gc)
-                ens_loop(v, out, c, &wr, &d0, dd, r1, s1, h1, r2, s2, h2, k, nw, gc, nc, 0, 1);
+                ens_loop(v, out, c, &wr, &d0, dd, r1, s1, h1, r2, s2, h2, k, nw, gc, nc, 0, 1, 0);
+            else if (g0)
+                ens_loop(v, out, c, &wr, &d0, dd, r1, s1, h1, r2, s2, h2, k, nc, gc, nc, 0, 0, 1);
             else
-                ens_loop(v, out, c, &wr, &d0, dd, r1, s1, h1, r2, s2, h2, k, nw, gc, nc, 0, 0);
+                ens_loop(v, out, c, &wr, &d0, dd, r1, s1, h1, r2, s2, h2, k, nw, gc, nc, 0, 0, 0);
         }
         out += c;
         n -= c;
@@ -743,9 +768,10 @@ void mono_chord_notes(const uint8_t *p, int32_t *t)
 #define SIN_STEP(Y, Z) (Y = 2 * Z - Y - (fmac1t(kp, Z) << 2))
 static void chord_sines(struct mono_voice *v, const uint8_t *p, const uint32_t *io, int16_t *out, int n)
 {
-    int32_t gc, nc, d0, dd, i;
+    int32_t g0, gc, nc, d0, dd, i;
     uint16_t wr = v->wr;
-    cho_setup(v, p, n, &gc, &nc, &d0, &dd);
+    cho_setup(v, p, n, &g0, &nc, &d0, &dd);
+    gc = cho_eco(v, g0);
     while (n > 0) {
         int c = n < CHUNK ? n : CHUNK, j;
         int32_t acc[CHUNK];
@@ -781,6 +807,14 @@ static void chord_sines(struct mono_voice *v, const uint8_t *p, const uint32_t *
                 wr = (wr + 1) & CHO_MASK;
                 d0 += dd;
             }
+        } else if (g0) {                            /* the chorus faded out (eco) */
+            for (j = 0; j < c; j++) {
+                int32_t dry = sat16(acc[j] >> 15);
+                v->dl[wr] = (int16_t)dry;
+                out[j] = sat16((dry * (nc >> 1)) >> 14);
+                wr = (wr + 1) & CHO_MASK;
+            }
+            d0 += dd * c;
         } else {
             for (j = 0; j < c; j++) {
                 int16_t dry = sat16(acc[j] >> 15);

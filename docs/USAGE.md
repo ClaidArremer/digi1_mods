@@ -145,7 +145,7 @@ One page, one band per column (bands 1-4 = knobs A/E, B/F, C/G, D/H):
   after a while.
 - A band at 0 dB (bell/shelf) costs nothing; four active bands cost about 5 % of the audio time (see RISKS.md).
 
-## Digi Mono (elekloader mod `digimono`, 0.22; needs digichain 1.6, ticked with it) and Digi Macro (`digimacro`, 1.0: MACRO; needs Digi Mono)
+## Digi Mono (elekloader mod `digimono`, 0.23; needs digichain 1.6, ticked with it) and Digi Macro (`digimacro`, 1.1: MACRO; needs Digi Mono)
 - **Pick a machine:** FUNC+SRC on an audio track, then scroll past SLICE (and past any other mod's machines):
   MONO SIN, MONO NOISE, MONO SAW, MONO PULSE, MONO ENS, MONO VO, POLY SIN, MACRO (with Digi Macro), CHORDS. YES to confirm. The track needs no sample.
 - **MACRO** (the Digi Macro mod) plays engines ported from Plaits: **B ENGN** the engine, in zones of 8: WSHAPE (0-7), 2OP FM
@@ -184,6 +184,9 @@ One page, one band per column (bands 1-4 = knobs A/E, B/F, C/G, D/H):
   that. Only sounding voices count (a track sleeps once its amp envelope is silent). When the screen or
   buttons get slow, or you hear clicks, use fewer of them at once, keep digihealth's FAST AUDIO on, and
   check the load with its SYSTEM INFO (DSP, now and peak).
+- **When the CPU runs short** (0.23): first the sound gets a little plainer (ENS and CHORDS lose their
+  chorus, MACRO's 2OP FM and PARTCL take lighter paths) until the load has been low for 2 s; if that is not
+  enough, the heaviest voice goes silent until there is room for it, and the others play on.
 - **How many at once on your unit (a load test):**
   1. Build core, digichain, Digi Mono and digihealth only (FAST AUDIO on, as it is by default), and turn
      SETTINGS > SYSTEM INFO on: the top bar shows DSP, now and its peak over the last second.

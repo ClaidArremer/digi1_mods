@@ -59,7 +59,8 @@ struct mono_voice {
     uint8_t  sub;                   /* SAW, PULS: main-oscillator wraps, bit 0 / bits 0-1 = sub 1 / 2 */
     uint8_t  pad;                   /* VO: bit 0, which sample of a 24 kHz pair is next              */
     uint8_t  own;                   /* 1: the chorus line is set up (0: clear it before use)             */
-    uint8_t  spare[3];
+    uint8_t  cho_fade;              /* ENS, CHORDS: how far the chorus has faded out (digimono_eco), 0..8 */
+    uint8_t  spare[2];
     int32_t  f_lo[3], f_bp[3];      /* VO: the three formant resonators                              */
     int32_t  c_lo, c_bp;            /* VO: the consonant's noise band                                */
     int32_t  glp;                   /* VO: the glottal source's low-pass                             */
@@ -89,6 +90,11 @@ void mono_render(struct mono_voice *v, int machine, const uint8_t *p, uint32_t i
 /* The phase increment of a pitch in 1/128 semitone, MIDI note 0 = 0 (note 60 = 7680 = middle C),
  * clamped to MONO_INC_MAX. */
 uint32_t mono_pitch_inc(int32_t pitch);
+
+/* 1 while the audio render is short of time (Digi Mono's overload guard, digimono.c): the machines take
+ * their cheaper paths, faded or from a note's start so that no click marks the change (sine.c; Digi
+ * Macro reads it too) */
+extern uint8_t digimono_eco;
 
 /* the sine table (sine.c): one cycle in 512 steps, Q15, and 128 more (a cosine reads it a quarter on);
  * Digi Macro imports it */

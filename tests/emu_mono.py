@@ -129,13 +129,21 @@ def main():
     rnd = random.Random(7)
     cases = blocks = 0
     same = kept_all = True
-    for case in range(120):
+    host_eco = ctypes.c_uint8.in_dll(H.LIB, "digimono_eco")
+
+    def set_eco(on):                            # the overload guard's flag (digimono.c), on both builds
+        host_eco.value = on
+        cf.uc.mem_write(syms["digimono_eco"], bytes([on]))
+    for case in range(160):                     # the last 40 with the guard's eco flag going on and off
+        set_eco(0)
         m = rnd.randrange(9) if case % 10 else 9                  # 9: out of range, must be silence
         cf.init()
         hv = H.Voice()
         H.LIB.mono_init(ctypes.byref(hv))
         prm = [rnd.randrange(128) for _ in range(7)]
         for b in range(24):
+            if case >= 120 and rnd.random() < 0.2:
+                set_eco(rnd.randrange(2))
             if b % 8 == 0:
                 cf.trig(m)
                 H.LIB.mono_trig(ctypes.byref(hv), m)
@@ -152,6 +160,7 @@ def main():
                 same = False
             blocks += 1
         cases += 1
+    set_eco(0)
     check(same, "%d voices, %d blocks: every sample and the voice state equal to the PC build's" % (cases, blocks))
     check(kept_all, "d2-d7 / a2-a6 and the stack kept by every call (the C calling convention)")
     ok = all(cf.call("mono_pitch_inc", p)[0] == H.LIB.mono_pitch_inc(p) for p in range(-200, 131 * 128, 37))
@@ -184,6 +193,15 @@ def main():
         worst = max(worst, row[1])
         print("  %-5s %8.0f %8.0f   = %4.1f %% of the stock render, %4.1f %% of a block's cycles at 1 cycle each"
               % (name, row[0], row[1], 100 * row[1] / 84000, 100 * row[1] / 166667))
+        if name in ("ENS", "CHSIN", "CHORD"):   # heavy, the guard's eco flag on (the chorus faded out)
+            set_eco(1)
+            cf.init()
+            cf.trig(m)
+            for _ in range(12):
+                cf.render(m, heavy, inc, 32)
+            tot = sum(cf.render(m, heavy, inc, 32, count=True)[2] for _ in range(16))
+            set_eco(0)
+            print("  %-5s %8s %8.0f   (eco)" % ("", "", tot / 16))
     check(worst < 8000, "the heaviest machine setting costs under 8,000 instructions a voice a block (%.0f)" % worst)
     print()
     if FAIL:

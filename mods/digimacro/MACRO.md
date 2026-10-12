@@ -1,14 +1,14 @@
 # MACRO: Plaits' engines as one machine (the Digi Macro mod)
 
-Status: **Digi Macro 1.0 (MACRO as in Digi Mono 0.18-0.21): eight engines (WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT, GRAIN), Plaits' main
-output (OUT) only; checked in emulation.** More engines are added one at a time with the same workflow
+Status: **Digi Macro 1.1 (MACRO as in Digi Mono 0.18-0.21, and lighter paths under load): eight engines (WSHAPE, 2OP FM, NOISE, PARTCL, BDRUM, SNARE, HIHAT, GRAIN), Plaits' main
+output (OUT) only; 1.0 played on a unit with no freeze.** More engines are added one at a time with the same workflow
 (below).
 
 MACRO is a machine in the FUNC+SRC list (machine 27), in its own elekloader mod, `digimacro`, since
 Digi Mono 0.22. Digi Mono hosts it (mods/digimono/digimono_ext.h): it plays MACRO's voices in the audio render, on
 its own stack and under its overload guard, keeps each voice's MACRO state in the voice, and draws the
 knobs with the names and values Digi Macro gives (`digimacro.c`). Digi Macro imports Digi Mono's sine
-table (`MACRO_SINE`, mods/digimono/sine.c). Its sound comes from engines of
+table (`MACRO_SINE`, mods/digimono/sine.c) and, since 1.1, its overload guard's flag (`digimono_eco`). Its sound comes from engines of
 **Plaits**, the macro oscillator by Emilie Gillet (github.com/pichenettes/eurorack, MIT licence), restated
 in 32-bit integer arithmetic for the ColdFire, which has no FPU. The licence text is at the top of
 `macro.c` and `macro_tables.h`. Plaits is Mutable Instruments' product; this is an unofficial port of its
@@ -132,9 +132,9 @@ HARM, TIMB and MORP at 127:
 | engine | played | heavy knobs |
 |---|---|---|
 | WSHAPE | 4.4 % | 4.3 % |
-| 2OP FM | 4.3 % (no feedback) | 10.0 % (feedback, 4x) |
+| 2OP FM | 4.3 % (no feedback) | 10.0 % (feedback, 4x); 5.6 % under eco (2x) |
 | NOISE | 4.9 % | 5.2 % |
-| PARTCL | 5.4 % (7.8 % dense) | 9.7 % |
+| PARTCL | 5.4 % (7.8 % dense) | 9.7 %; 7.8 % under eco (four particles) |
 | BDRUM | 6.0 % | 6.9 % |
 | SNARE | 5.4 % | 7.6 % |
 | HIHAT | 5.9 % | 5.8 % |
@@ -143,7 +143,9 @@ HARM, TIMB and MORP at 127:
 A MACRO track not playing costs nothing, and a drum costs nothing once it has died away. The stock render
 uses about 80 % of each block, so roughly 20 % is left for all the mods; with digihealth's FAST AUDIO
 about 28 %: three to five MACRO voices at once. If the voices ask for more than the block allows, Digi Mono
-rests them for a moment (a short dropout) rather than let the unit lock up (0.17).
+first has 2OP FM start its notes at 2x and PARTCL fire four of its six particles (digimono_eco, Digi
+Mono 0.23 and Digi Macro 1.1), then rests the heaviest voice until there is room for it, rather than let
+the unit lock up (mods/digimono/DESIGN.md, "The overload guard").
 
 ## Next engines
 

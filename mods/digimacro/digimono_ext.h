@@ -40,6 +40,10 @@ struct digimono_ext {
     void (*render)(void *state, const uint8_t *p, uint32_t inc, int16_t *out, int n);
 };
 
+/* 1 while the audio render is short of time (Digi Mono's overload guard): a machine may take a cheaper
+ * path, as long as the change makes no click (faded, or from a note's start). Digi Mono 0.23 and later. */
+extern uint8_t digimono_eco;
+
 /* the collection: pointers to the machines' structs, a null one last (elekloader adds it) */
 extern const struct digimono_ext *const digimono_ext[];
 

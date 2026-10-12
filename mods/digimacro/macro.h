@@ -164,4 +164,8 @@ extern const char *const macro_engine_name[MACRO_ENGINES];
  * which Digi Macro imports */
 extern const int16_t MACRO_SINE[641];
 
+/* Digi Mono's: 1 while the audio render is short of time (its overload guard). 2OP FM then starts its notes
+ * at 2x, PARTCL fires four of its six particles. */
+extern uint8_t digimono_eco;
+
 #endif

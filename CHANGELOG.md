@@ -3,7 +3,33 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
-## Digi Mono 0.22 and Digi Macro 1.0: MACRO in a mod of its own (HW: Digi Mono confirmed; MACRO froze on 2.1h, before 0.21's fix: not yet tested)
+## Digi Mono 0.23 and Digi Macro 1.1: a lighter sound under load instead of dropouts (HW: not yet)
+- **Reported on a unit** (0.22 / 1.0): severe audio dropouts with two Digi Mono tracks (ENS, CHORDS), a MACRO
+  track (2OP FM, PARTCL, drums) and samples playing, in a build with Digi Utilities, Matrix, Poly, digihealth
+  (FAST AUDIO), SOPHIE, DigiFilter and others. The overload guard (0.17) rested every Digi Mono voice for
+  16 ms each time three renders in a row ran over 94 % of the period; just over that line it did so over
+  and over, so the voices sounded for a few blocks out of every 27.
+- **Now in steps** (mods/digimono/DESIGN.md, "The overload guard"):
+  1. **eco**: a render over 7/8 of the period, and the machines take their cheaper paths until the render
+     has been under 5/8 for 2 s: ENS and CHORDS fade their chorus out (over 8 blocks; it fades back in the
+     same way), MACRO's 2OP FM starts its notes at 2x instead of 4x, PARTCL fires four of its six
+     particles. No click: faded, or from a note's start;
+  2. **one voice**: if that is not enough, the voice whose block takes longest rests (32 ms, longer each
+     time again) until there is room for it; the others play on;
+  3. **every voice**, 16 ms as before, only when the load is not Digi Mono's (12 renders in a row over).
+- Eco saves, a voice a block: ENS and CHORDS about 900 instructions (27 %); 2OP FM with feedback 44 %
+  (10.0 -> 5.6 % of a block); PARTCL 20 % (9.7 -> 7.8 %).
+- Digi Macro 1.1 reads Digi Mono's flag (`digimono_eco`), so it needs Digi Mono 0.23 (mods/digimono/
+  digimono_ext.h).
+- Checked: with eco off, every Digi Mono machine and MACRO engine plays 0.22's / 1.0's samples, bit for bit
+  (16,000 random blocks each, the PC builds of both versions); the ColdFire builds equal the PC builds with
+  eco going on and off (tests/emu_mono.py, emu_macro.py); the guard's own code under made-up loads
+  (tests/guard_sim.py): no eco while the render fits, eco alone when that is enough, then only the heaviest
+  voice, which comes back once there is room and not for blips, eco off after 2 s of calm.
+- tools/dev.sh: the pairs in COMPATIBILITY.txt are checked with the mods they require (Digi Macro with Digi
+  Mono: 0.22's list called Digi Macro a clash with everything), and a clash names its reason.
+
+## Digi Mono 0.22 and Digi Macro 1.0: MACRO in a mod of its own (HW: confirmed, Digi Macro played with no freeze)
 - **MACRO is now the Digi Macro mod** (`digimacro`, elemods/digimacro-1.0*.elemod): tick it in elekloader
   with Digi Mono (it requires it, and elekloader ticks Digi Mono and digichain with it). A build without
   it saves MACRO's 32 KB of code. Same machine (27), same place in the list, same knobs and sound: a sound
