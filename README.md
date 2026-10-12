@@ -41,13 +41,13 @@ your OS file from your own official one.
 
 | mod | what it adds | version | hardware |
 |---|---|---|---|
-| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN and CHORDS | 0.22 | not yet tested |
-| [Digi Macro](#digi-macro) (`digimacro`) | MACRO: Plaits' engines as a machine (needs Digi Mono) | 1.0 | not yet tested |
-| [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0c | not yet tested |
-| [Digi Utilities](#digi-utilities) (`digiutils`) | waveform, spectrum and X-Y pages, tuner, track activity | 1.9a | stand-alone 1.5d confirmed |
-| [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0c | not yet tested |
-| [Digi Poly](#digi-poly) (`digipoly`) | POLY: chords from a track's own trigs, borrowing other tracks' voices | 2.0a | not yet tested |
-| [digichain](#digichain) (`digichain`) | lets SOPHIE, NEIGHBOR, DIGISLICER and Digi Mono share a build; menu icons | 1.3 | not yet tested |
+| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN and CHORDS | 0.22 | **confirmed** |
+| [Digi Macro](#digi-macro) (`digimacro`) | MACRO: Plaits' engines as a machine (needs Digi Mono) | 1.0 | froze on 2.1h; the fix (0.21, own render stack) not yet tested |
+| [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0c | **confirmed** |
+| [Digi Utilities](#digi-utilities) (`digiutils`) | waveform, spectrum and X-Y pages, tuner, track activity | 1.9a | **confirmed** |
+| [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0c | **confirmed** |
+| [Digi Poly](#digi-poly) (`digipoly`) | POLY: chords from a track's own trigs, borrowing other tracks' voices | 2.0a | **confirmed** |
+| [digichain](#digichain) (`digichain`) | lets SOPHIE, NEIGHBOR, DIGISLICER and Digi Mono share a build; menu icons | 1.3 | **confirmed** |
 
 They all need core 2.1 (elekloader brings it) and combine with each other and with the
 [other mods kept up to date](#other-mods-kept-up-to-date) here (digihealth, SOPHIE, NEIGHBOR, DIGISLICER,

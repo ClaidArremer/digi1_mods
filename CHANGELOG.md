@@ -3,7 +3,7 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
-## Digi Mono 0.22 and Digi Macro 1.0: MACRO in a mod of its own (HW: not yet)
+## Digi Mono 0.22 and Digi Macro 1.0: MACRO in a mod of its own (HW: Digi Mono confirmed; MACRO froze on 2.1h, before 0.21's fix: not yet tested)
 - **MACRO is now the Digi Macro mod** (`digimacro`, elemods/digimacro-1.0*.elemod): tick it in elekloader
   with Digi Mono (it requires it, and elekloader ticks Digi Mono and digichain with it). A build without
   it saves MACRO's 32 KB of code. Same machine (27), same place in the list, same knobs and sound: a sound
