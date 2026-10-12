@@ -19,7 +19,7 @@
 | defaults on a switch, MIDI CC 16-23) and render as ONESHOT, so the voice runs the whole stock voice
 | path (the amp envelope and VOL included, which an unknown render machine skips). digimono_rblock
 | replaces the block of a voice whose track plays one of them (core_track_machine). Ids 20..26 and 28 (27 is
-| Digi Macro's MACRO, which Digi Mono renders too: src/digimono_ext.h), clear of
+| Digi Macro's MACRO, which Digi Mono renders too: mods/digimono/digimono_ext.h), clear of
 | NEIGHBOR (4), DIGISLICER (5), Digi Poly's POLY (6) and SOPHIE (7).
         .balign 4
         .globl  digimono_m20, digimono_m21, digimono_m22, digimono_m23, digimono_m24, digimono_m25

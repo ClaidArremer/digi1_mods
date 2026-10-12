@@ -165,6 +165,11 @@ build_one() {   # build_one NAME SOURCEDIR -> echo the .elemod
                     || echo "  $1: $(tail -1 "$LOG/chain-$1.log")" >&2
             fi ;;
     esac
+    if [[ $1 == digifilter ]]; then   # GCC 14 and later refuse its ACTIVE_TRACK (a pointer read into an int):
+        # read it as the int it is, the same 32 bits (filter_ui.c; DigiFilter 1.0k)
+        sed -i.bak 's/#define ACTIVE_TRACK (\*(int \*volatile \*)/#define ACTIVE_TRACK (*(volatile int *)/' "$stage"/*.c \
+            && rm -f "$stage"/*.c.bak
+    fi
     if [[ $1 == digihealth ]]; then   # its own build.py: FAST AUDIO's parts are worked out from the stock file
         (cd "$stage" && PYTHONPATH=$TOOLS/elekloader python3 build.py --stock "$STOCK" --out "$stage/out") \
             > "$LOG/build-$1.log" 2>&1 || die "$1 failed to build: $LOG/build-$1.log"
@@ -290,7 +295,14 @@ cmd_mods() {   # the easy path: the latest elekloader and mods as .elemod files,
     fetch digifilter "$DIGIFILTER_URL" ""
     fetch digineighbor "$DIGINEIGHBOR_URL" ""
     fetch digihealth "$DIGIHEALTH_URL" ""
+    local was
+    was=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)
     cmd_update elekloader digisophie digislicer digifilter digineighbor digihealth
+    if [[ $(git -C "$ROOT" rev-parse HEAD 2>/dev/null) != "$was" ]]; then
+        # this script was just pulled too: build with the new one (bash would go on reading the old)
+        say "digi1_mods changed: building with its new tools/dev.sh"
+        exec bash "$ROOT/tools/dev.sh" elemods
+    fi
     cmd_elemods
     echo "next: tools/dev.sh loader"
 }

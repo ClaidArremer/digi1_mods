@@ -12,6 +12,9 @@
  *
  * Knob order everywhere: B C E F G H D (A is the track's TUNE). render() gets the seven parameters as
  * knob_p maps them: p[knob_p[k]] = knob k's value, 0..127; a knob with knob_p -1 is not on the page.
+ *
+ * This file is Digi Mono's (mods/digimono); a mod that uses it carries a copy in its own folder, so that the
+ * folder builds on its own (Digi Macro: mods/digimacro). tools/build_elemods.py checks the copy matches.
  */
 #ifndef DIGIMONO_EXT_H
 #define DIGIMONO_EXT_H

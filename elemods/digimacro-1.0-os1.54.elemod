@@ -1774,7 +1774,7 @@
  "conflicts": [],
  "build": {
   "sources": {
-   "digimacro.c": "02840ebe758f3a3ac505c5c109fe0d9b3745028972df48ac84a097383eac043a",
+   "digimacro.c": "9370bf2d2871be171853cc0726a9bb72d884356f5b76c74dd177bb2ba4d4ed1a",
    "macro.c": "a5e5c3329dc954e94459ec1295976f2073a6164b09baf9c58adff20ee5dba733"
   }
  },

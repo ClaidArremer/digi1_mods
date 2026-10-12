@@ -150,7 +150,7 @@ What each parameter does, as this engine reads the manual:
 ## How it sits in the firmware (OS 1.53; details in docs/TECHNICAL_NOTES.md)
 
 - **Machines:** eight descriptors in core 2.1's `core_machines`, ids 20..26 and 28 (POLY SIN 26, CHORDS 28),
-  and other mods' machines in 20..29 hosted through the collection `digimono_ext` (src/digimono_ext.h:
+  and other mods' machines in 20..29 hosted through the collection `digimono_ext` (mods/digimono/digimono_ext.h:
   Digi Macro's MACRO, 27): Digi Mono renders their voices (their state in the voice's chorus-line memory)
   and draws their knobs from their tables. Clear of NEIGHBOR (4), POLY (6),
   DIGISLICER (5) and SOPHIE (7). They have `params` = ONESHOT and `render` = ONESHOT, and digimono

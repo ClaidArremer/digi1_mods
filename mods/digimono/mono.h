@@ -23,7 +23,7 @@ enum {
     MONO_ENS  = 4,      /* SWAVE-ENS   four oscillators at set intervals, saw..pulse, chorus      */
     MONO_VO   = 5,      /* VO-6        a formant voice: vowel 1 -> vowel 2, consonants              */
     MONO_PSIN = 6,      /* (GND-SIN)   three sines at set notes, a pitch envelope: POLY SIN         */
-    MONO_EXT7  = 7,     /* (id 27: a machine of another mod: Digi Macro's MACRO; src/digimono_ext.h)   */
+    MONO_EXT7  = 7,     /* (id 27: a machine of another mod: Digi Macro's MACRO; mods/digimono/digimono_ext.h)   */
     MONO_CHORD = 8,     /* CHORDS      four oscillators as a chord: type, inversion, spread; ENS's sound */
     MONO_MACHINES
 };

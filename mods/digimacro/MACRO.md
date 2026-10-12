@@ -5,7 +5,7 @@ output (OUT) only; checked in emulation.** More engines are added one at a time 
 (below).
 
 MACRO is a machine in the FUNC+SRC list (machine 27), in its own elekloader mod, `digimacro`, since
-Digi Mono 0.22. Digi Mono hosts it (src/digimono_ext.h): it plays MACRO's voices in the audio render, on
+Digi Mono 0.22. Digi Mono hosts it (mods/digimono/digimono_ext.h): it plays MACRO's voices in the audio render, on
 its own stack and under its overload guard, keeps each voice's MACRO state in the voice, and draws the
 knobs with the names and values Digi Macro gives (`digimacro.c`). Digi Macro imports Digi Mono's sine
 table (`MACRO_SINE`, mods/digimono/sine.c). Its sound comes from engines of

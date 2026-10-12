@@ -77,7 +77,7 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
   consonants) and **POLY SIN** (three sines at set notes - a chord on one track - with a pitch envelope). They need no sample; the track's filter, amp, LFOs, sends and p-locks work on them as on a
   sample.
 - **MACRO** is now its own mod, [Digi Macro](#digi-macro) (0.22). Digi Mono still plays its voices: it
-  hosts machines of other mods (src/digimono_ext.h), on its render stack and with its overload guard.
+  hosts machines of other mods (mods/digimono/digimono_ext.h), on its render stack and with its overload guard.
 - **CHORDS** (0.19): a chord on one track. **B TYPE** picks one of 24 chords (MAJ, MIN, SUS2, SUS4, DIM,
   AUG, MAJ6, MIN6, MAJ7, MIN7, DOM7, MMAJ7, M7B5, DIM7, 7SUS4, ADD9, MADD9, MAJ9, MIN9, DOM9, QUART, FIFTH,
   OCT, UNI), **C INV** its inversion (ROOT, 1ST, 2ND, 3RD), **E SPRD** its spread (CLOSE, OPEN, WIDE,

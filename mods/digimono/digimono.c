@@ -32,7 +32,7 @@
 #include "digimono_ext.h"
 
 /* the UI and the per-block glue: built for size (the samples are made in mono.c, and in other mods for
- * their machines: src/digimono_ext.h) */
+ * their machines: mods/digimono/digimono_ext.h) */
 #pragma GCC optimize("Os", "no-tree-loop-distribute-patterns")
 
 #define MACH_FIRST   20                      /* digimono_m20..m28 in glue.s: SIN NOIS SAW PULS ENS VO PSIN, 28 CHORDS */

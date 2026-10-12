@@ -22,7 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SHARED = {  # file -> folder it comes from
     "cable.s": "src", "cc.s": "src", "lock.s": "src", "scope.s": "src", "tuner.s": "src",
-    "spectrum.s": "src", "songoff.s": "src", "kitstore.h": "src", "digimono_ext.h": "src", "spec_tables.inc": "bin", "spec_sin.bin": "bin",
+    "spectrum.s": "src", "songoff.s": "src", "kitstore.h": "src", "spec_tables.inc": "bin", "spec_sin.bin": "bin",
 }
 MODS = ["digipoly", "digiutils", "digimatrix", "digieq", "digimono", "digimacro"]
 
@@ -36,6 +36,11 @@ def main():
     a = ap.parse_args()
     env = dict(os.environ, PYTHONPATH=os.path.abspath(a.elekloader) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     built = []
+    # Digi Mono's machine interface: Digi Macro carries a copy, so each mod's folder builds on its own
+    # (elekloader's SDK, the elekloader app); the two must be the same
+    ext = [os.path.join(ROOT, "mods", m, "digimono_ext.h") for m in ("digimono", "digimacro")]
+    if open(ext[0]).read() != open(ext[1]).read():
+        sys.exit("mods/digimacro/digimono_ext.h differs from mods/digimono/digimono_ext.h: copy it over")
     for mid in a.mods:
         src_dir = os.path.join(ROOT, "mods", mid)
         stage = os.path.join(a.out, mid)

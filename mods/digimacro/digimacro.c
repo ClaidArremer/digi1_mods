@@ -1,5 +1,5 @@
 /* Digi Macro: the MACRO machine, engines ported from Plaits by Emilie Gillet (macro.c, MIT licence), as one
- * of Digi Mono's machines (src/digimono_ext.h): Digi Mono renders its voices, on its own stack, with its
+ * of Digi Mono's machines (mods/digimono/digimono_ext.h): Digi Mono renders its voices, on its own stack, with its
  * overload guard, and draws its knobs; this mod brings the engines, their state and the knobs' names.
  *
  * Two registrations: the machine list entry (core 2.1's core_machines: id 27, MACRO, its icon; ONESHOT's
