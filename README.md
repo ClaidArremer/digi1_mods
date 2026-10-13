@@ -24,6 +24,8 @@ your OS file from your own official one.
 - **Digi Utilities**: waveform, spectrum and X-Y scope, a tuner and track activity, on a held "...".
 - **Digi EQ**: a 4-band master EQ on every output, main outs, headphones and USB.
 - **digichain**: SOPHIE, NEIGHBOR, DIGISLICER, Digi Mono and Digi Poly in one build.
+- **Tone+FX**: Digital Alchemy DSP's master effects suite, ported: ring modulator, wavefolder, tilt EQ,
+  bit crusher, pitch and stereo modes and a PERFORM page of momentary pads, on every output.
 - **Ready to use:** the `.elemod` files of every mod, the other authors' too, are in [elemods/](elemods/),
   built with the latest elekloader: add them in elekloader with your own official OS 1.53 or 1.54 file and
   build (the `-os1.54` files are for 1.54).
@@ -48,11 +50,14 @@ your OS file from your own official one.
 | [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0c | **confirmed** |
 | [Digi Poly](#digi-poly) (`digipoly`) | POLY: chords from a track's own trigs, borrowing other tracks' voices | 2.0a | **confirmed** |
 | [digichain](#digichain) (`digichain`) | lets SOPHIE, NEIGHBOR, DIGISLICER and Digi Mono share a build; menu icons | 1.3 | **confirmed** |
+| [Tone+FX](#tonefx) (`tonefx`) | Digital Alchemy DSP's master effects (ring, fold, tilt EQ, crush, pitch / stereo, PERFORM pads), ported; GPL-2.0 | 3.2a3 | not yet tested |
 
 They all need core 2.1 (elekloader brings it) and combine with each other and with the
 [other mods kept up to date](#other-mods-kept-up-to-date) here (digihealth, SOPHIE, NEIGHBOR, DIGISLICER,
 DigiFilter): every pair, checked by `tools/dev.sh elemods`. All of them in one build fit too, but for
-DIGISLICER (88 KB), which needs a few left out: the mods share 128 KB.
+DIGISLICER (88 KB), which needs a few left out: the mods share 128 KB. Tone+FX is the exception: it
+replaces Digi EQ (the two use the same master page and render site), and with every other mod it needs a
+few left out too.
 
 **OS 1.54:** every mod here is built for both 1.53 and 1.54, and on 1.54 they pass the same emulator tests
 (Digi Mono, Digi Poly, Digi Matrix, Digi EQ, Digi Utilities' pages, NEIGHBOR through digichain). Of the other
@@ -205,6 +210,18 @@ in the FUNC+SRC list
 - A new NEIGHBOR track takes the track on its left as its source, and its SLOT runs 0-8.
 - Ticked automatically with Digi Mono or a `-chain` mod. Details: [mods/digichain/README.md](mods/digichain/README.md).
 
+## Tone+FX
+
+**Tone+FX** (elekloader mod `tonefx`, 3.2a3) - Digital Alchemy DSP's Tone+FX 3.2a, ported (GPL-2.0-or-later)
+- Master effects on **every output** (main, headphones, USB audio): ring modulator, TILT EQ, CRUSH (bits,
+  sample rate, crunch), a wavefolder, PITCH (WOB, SHFT) and STEREO (FLAN, PAN, WIDE) modes, an output meter
+  and a soft ceiling.
+- Seven pages after the stock master pages (FUNC+LFO, then LEFT/RIGHT): DIGI RING, FOLD, TILT, CRUSH, PITCH,
+  STEREO, and PERFORM (UP), whose 16 trigs are momentary pads. MIDI CC controls every parameter.
+- Settings follow the pattern while the unit is on; they are not saved over a power cycle.
+- **Not with Digi EQ** (the same master page and render site). 36.4 KB of the mods' 128 KB.
+- No boot splash since 3.2a3. Details and what the port changed: [mods/tonefx/README.md](mods/tonefx/README.md).
+
 ## Other mods kept up to date
 
 `tools/dev.sh mods` (and the elekloader app's update button) also fetches and builds these, by other authors,
@@ -303,3 +320,5 @@ No firmware from the manufacturer is stored or distributed here; see [DISCLAIMER
 ## License
 
 Our own code and docs: MIT ([LICENSE](LICENSE)). This does **not** cover the manufacturer's firmware.
+mods/tonefx is a port of Digital Alchemy DSP's Tone+FX and stays under its GPL-2.0-or-later
+([mods/tonefx/LICENSE](mods/tonefx/LICENSE)).

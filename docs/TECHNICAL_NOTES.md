@@ -1360,3 +1360,58 @@ Found in OS 1.53 with the disassembly and checked in digiemu (tests/digiemu_mono
 - **Callers**, for sharing those functions: 0x4000fe8a is called only at 0x40030daa, 0x4000feac only at
   0x40032d36, and 0x400657ee at 0x40032d16, 0x40038714, 0x40038854, 0x40039142 and 0x400392ea. A mod
   redirecting the call (`keep2`) and falling through to the function leaves the entry to another mod.
+
+## Tone+FX 3.2a2 (2026-10-12; 3.2a3 without the boot splash): Digital Alchemy DSP's master FX on the DT1
+Found in OS 1.53 and 1.54 with the disassembly, and checked in digiemu (tests/digiemu_tonefx.py) and
+unicorn (tests/emu_tonefx.py). Mod: mods/tonefx (its README has the user side).
+- **The output buffer moved in 1.54.** It is 0x4ba9f080 + half × 0x100 on 1.54 (the render's
+  `addi.l #0x4ba9f080` at 0x40078142 and the half test `cmpi.l #0x4ba9f180` at 0x4007743a), against
+  0x4ba8f080 on 1.53. tools/port_os.py does not map 0x4b.. addresses, so corea.h names it under OS154.
+  The eDMA channel-54 SADDR register (0xfc0456c0) is the original's too.
+- **The master view's title** is vtable slot 19 (0x40184628; 1.54 0x40184928) = 0x40030930. It is a
+  std::string returned through a0: the kind's long name, plus " (%d/%d)" once there are two pages or more.
+- **The stock page key's page change** (0x4003374e..0x400337b8):
+  1. index = (index + 1) % n; invalidate;
+  2. 0x400c02e4(view + 148);
+  3. the title popup: slot 19, then 0x40093a12(*(view + 108), &title), then ~string 0x40179170;
+  4. slot 20 (0x40032700).
+- **NO does not close the master pages**, on stock ones either: FUNC+LFO again does.
+- **Key events.**
+  - A trig's or arrow's press has flags 1, its release 0x10, a repeat 9 (0x29 sometimes). Some presses
+    came with 5 (bit 2's meaning is not known).
+  - FUNC+key: 2 is added (LFO with FUNC: press 3, release 0x12).
+  - The modifier keys themselves (FUNC 1, TRK 2, PTN 3, BANK 4 ...) release with flags 0.
+- **Knob events** at Brain::enc (core's ev_enc) carry 16 per notch, as the master view's listener sees
+  them; a fast turn arrives as fewer, larger events.
+- **operator new (0x400d4180) returns the pointer in d0.** m68k-linux-gnu reads a returned pointer from
+  a0, so it must be declared as returning an integer (as eq.c does). Declared as `int *(*)(unsigned)`, it
+  wrote the page list to a random a0 and the heap halted (vector 257) at the next allocation.
+- **The CC entry 0x400d4a90(msg)** (1.54 0x400d4cb8) is called once per incoming CC: msg+0 status, +1 CC,
+  +2 value.
+  - It does nothing while the receive gate 0x4197b77c is 0.
+  - It calls 0x400d6a58(track, cc, val, isAuto, 0) for the auto channel (track 16) and each track on that
+    channel.
+  - Then 0x400158d2 -> 0x4007919e(track, ?, cc) maps the CC through RAM tables built at boot: 0x4199f85c
+    (audio tracks), 0x4199f050 (MIDI tracks), 0x419a0068 (auto channel), 0x419a02e8 (CC 16..23 per
+    machine). Some CCs are tested in code: 1, 2, 6, 33, 34, 38, 94, 95, 98, 99, 110, 120, 121, 123.
+  - Read from the running firmware, the tables use:
+    - audio tracks: 3 4 5 7 10 13 14 16..23 60..63 70..88 102..109 112..119;
+    - MIDI tracks: 3 4 5 14 60..63 70..77 102..109 112..119;
+    - auto channel: 24..31 84..92 102..109 111..119.
+- **The intro's presents** (the boot splash's sites up to 3.2a2; 3.2a3 leaves them stock).
+  - The intro runs on PIT3: its ISR is 0x4006c154, installed in the vector slot 0x40000340 at 0x4006c252.
+  - It calls the delta present panel_diff 0x400e60e2 at 0x4006c2d0, 0x4006c3ac, 0x4006c864 and 0x4006cb68,
+    and the full flush 0x400e6064 at 0x4006c3a4, 0x4006c85c and 0x4006cb60.
+  - Both send *0x4020d8f8 (fb_front) and then swap it with fb_back (0x4020d8fc). The panel bytes are
+    page + 8 × column, as on the original. 1.54: panel_diff 0x400e630a, flush 0x400e628c, fb 0x4020dca8;
+    the call sites have not moved.
+- **USB audio.** The effects run on the master pair (0x8000ea70) at 0x400721e6, Digi EQ's site (see "Digi
+  EQ 1.0a: the output path"): the 12-channel bus at 0x80002160 is copied from it later in that stage, and
+  the USB stream is built from the bus. The codec buffer (0x4ba8f080, the original's place) feeds only
+  the analog outputs. The master words are 8 bits hotter than the effects' 24-bit samples. master.c runs
+  the chain on block >> 8 and adds back (out - in) << 8, so a neutral chain leaves the master bit-exact.
+  The stage has d0-d3/a2-a4 live and the EMAC mid-use (msac/mac from 0x400721f8): the glue keeps
+  d0-d1/a0-a1, and the C code has no EMAC instruction. digiemu: the bus's L/R words >> 8 equal the
+  chain's output in every block, with FAST AUDIO running the stage from SRAM.
+- **Per pattern, in RAM.** Each pattern's kit (0x4191e018 + p × 0x91e; 1.54 0x4191f018) has 34 bytes at
+  +0x530 that are zero and never saved. Tone+FX's 24 params live there, one byte each.

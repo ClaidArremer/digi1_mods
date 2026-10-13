@@ -3,6 +3,49 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## Tone+FX 3.2a3: no boot splash; Tone+FX in this repository (HW: not yet)
+- **No boot splash:** the unit starts with its own intro. The splash's code (mods/tonefx/render.c, splash.s)
+  stays in the folder, not built; its seven sites on the intro's presents are gone, and the delay line
+  is the effect's alone again. 3.5 KB less RAM (36.4 KB in all).
+- **Tone+FX is in the repository** (mods/tonefx, tests/emu_tonefx.py, tests/digiemu_tonefx.py, its OS 1.54
+  addresses in tools/os154.json), and tools/dev.sh builds it with the others, so the elekloader app keeps
+  it current.
+- Checked: tests/emu_tonefx.py on OS 1.54 (the CC entry, every effect, bit-exact with all off); a build of
+  core 3.0 and Tone+FX boots in digiemu.
+
+## Tone+FX 3.2a2: Digital Alchemy DSP's Tone+FX, ported from its original FM-groovebox version (HW: not yet)
+- **New mod `tonefx`** (mods/tonefx, its README): Tone+FX 3.2a by Digital Alchemy DSP
+  (github.com/DigiAlchemydsp/RingTone, GPL-2.0-or-later), ported to the DT1, OS 1.53 and 1.54.
+  It adds master effects on every output (main, headphones and USB audio): ring → TILT → CRUSH → FOLD →
+  PITCH/STEREO → output ceiling → meter. They run on the master mix at Digi EQ's render site 0x400721e6;
+  on the original they run on the codec buffer, which here feeds the analog outputs only.
+- **The pages.** Seven pages after the stock master pages (FUNC+LFO, LEFT/RIGHT): DIGI RING, FOLD, TILT,
+  CRUSH, PITCH, STEREO and PERFORM (UP). The title bar names each page. The PERFORM page's 16 trigs are
+  momentary pads.
+- **Also in it:** MIDI CC control and the TONE+FX boot splash.
+- **What changed from the original:**
+  - **CC numbers.** CRUSH/WAVE CCs moved from 20..31 to 42..53: 20..31 are the DT1's SRC and FX CCs.
+  - **Settings.** They follow the pattern while the unit is on, but are not saved over a power cycle (the
+    kit's RAM-only bytes; every saved spare byte is taken).
+  - **PERFORM page.** PTN/FUNC/TRK + trig keep their stock meaning there.
+  - **RAM.** The splash shares the delay line's RAM.
+- **Combines** with every mod here but Digi EQ, which uses the same master-view and render sites. In RAM, Tone+FX
+  (39.9 KB) fits next to the 2.1j build only without Digi EQ and Digi Macro.
+- **Checked:**
+  - **unicorn** (tests/emu_tonefx.py):
+    - the CC entry;
+    - the chain: bit-exact when every effect is off, each mode within 24 bits;
+    - registers;
+    - cost: ~5,400 instructions a block at the defaults, ~16,600 with everything on.
+  - **digiemu**, on OS 1.53 and 1.54, and on the test build core 3.0 + digihealth + tonefx
+    (tests/digiemu_tonefx.py, tests/digiemu_splash.py):
+    - every page, knob and mode, with a test tone through each effect;
+    - the PERFORM pads;
+    - the per-pattern store, and PTN + trig on the PERFORM page;
+    - the USB bus equal to the chain's output in every block;
+    - the firmware's CC tables;
+    - the splash.
+
 ## Digi Mono 0.23 and Digi Macro 1.1: a lighter sound under load instead of dropouts (HW: not yet)
 - **Reported on a unit** (0.22 / 1.0): severe audio dropouts with two Digi Mono tracks (ENS, CHORDS), a MACRO
   track (2OP FM, PARTCL, drums) and samples playing, in a build with Digi Utilities, Matrix, Poly, digihealth

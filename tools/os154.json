@@ -5,6 +5,10 @@
    "how": "refs (565)",
    "new": "0x40000000"
   },
+  "0x40000340": {
+   "how": "refs (2)",
+   "new": "0x40000340"
+  },
   "0x40006e04": {
    "how": "window",
    "new": "0x40006e04"
@@ -72,6 +76,10 @@
   "0x4002a382": {
    "how": "window",
    "new": "0x4002a382"
+  },
+  "0x40030930": {
+   "how": "window",
+   "new": "0x40030930"
   },
   "0x40030daa": {
    "how": "window",
@@ -201,6 +209,42 @@
    "how": "window",
    "new": "0x40065e68"
   },
+  "0x4006c154": {
+   "how": "window",
+   "new": "0x4006c154"
+  },
+  "0x4006c252": {
+   "how": "window",
+   "new": "0x4006c252"
+  },
+  "0x4006c2d0": {
+   "how": "window",
+   "new": "0x4006c2d0"
+  },
+  "0x4006c3a4": {
+   "how": "window",
+   "new": "0x4006c3a4"
+  },
+  "0x4006c3ac": {
+   "how": "window",
+   "new": "0x4006c3ac"
+  },
+  "0x4006c85c": {
+   "how": "window",
+   "new": "0x4006c85c"
+  },
+  "0x4006c864": {
+   "how": "window",
+   "new": "0x4006c864"
+  },
+  "0x4006cb60": {
+   "how": "window",
+   "new": "0x4006cb60"
+  },
+  "0x4006cb68": {
+   "how": "window",
+   "new": "0x4006cb68"
+  },
   "0x4006f7ea": {
    "how": "window",
    "new": "0x4006f7ea"
@@ -309,6 +353,10 @@
    "how": "window",
    "new": "0x40079a60"
   },
+  "0x40093a12": {
+   "how": "window",
+   "new": "0x40093a56"
+  },
   "0x40095aec": {
    "how": "window",
    "new": "0x40095b30"
@@ -385,6 +433,10 @@
    "how": "window",
    "new": "0x400b92a4"
   },
+  "0x400c02e4": {
+   "how": "window",
+   "new": "0x400c050c"
+  },
   "0x400c1040": {
    "how": "window",
    "new": "0x400c1268"
@@ -437,6 +489,14 @@
    "how": "window",
    "new": "0x400d43a8"
   },
+  "0x400d4a90": {
+   "how": "window",
+   "new": "0x400d4cb8"
+  },
+  "0x400d4a98": {
+   "how": "window",
+   "new": "0x400d4cc0"
+  },
   "0x400d53dc": {
    "how": "window",
    "new": "0x400d5604"
@@ -449,6 +509,14 @@
    "how": "window",
    "new": "0x400d5986"
   },
+  "0x400e6064": {
+   "how": "window",
+   "new": "0x400e628c"
+  },
+  "0x400e60e2": {
+   "how": "window",
+   "new": "0x400e630a"
+  },
   "0x400eb218": {
    "how": "window",
    "new": "0x400eb440"
@@ -456,6 +524,10 @@
   "0x400ed53e": {
    "how": "window",
    "new": "0x400ed766"
+  },
+  "0x400ed94e": {
+   "how": "window",
+   "new": "0x400edb76"
   },
   "0x400ee036": {
    "how": "window",
@@ -472,6 +544,10 @@
   "0x401539b2": {
    "how": "window",
    "new": "0x40153bda"
+  },
+  "0x40179170": {
+   "how": "window",
+   "new": "0x40179470"
   },
   "0x4017ac20": {
    "how": "window",
@@ -514,12 +590,24 @@
    "new": "0x401848e4"
   },
   "0x401845ec": {
-   "how": "near 0x401845e4",
+   "how": "near 0x401845dc",
    "new": "0x401848ec"
+  },
+  "0x40184628": {
+   "how": "near 0x401845ec",
+   "new": "0x40184928"
   },
   "0x401846bc": {
    "how": "near 0x401846ba",
    "new": "0x401849bc"
+  },
+  "0x40199bac": {
+   "how": "window",
+   "new": "0x40199eac"
+  },
+  "0x40199bbc": {
+   "how": "window",
+   "new": "0x40199ebc"
   },
   "0x4019b1c0": {
    "how": "window",
@@ -613,9 +701,25 @@
    "how": "window",
    "new": "0x40200ebc"
   },
+  "0x40200b20": {
+   "how": "window",
+   "new": "0x40200ed0"
+  },
+  "0x40200c20": {
+   "how": "refs (1)",
+   "new": "0x40200fd0"
+  },
+  "0x40200e20": {
+   "how": "refs (1)",
+   "new": "0x402011d0"
+  },
   "0x4020c29c": {
    "how": "window",
    "new": "0x4020c64c"
+  },
+  "0x4020d8f8": {
+   "how": "window",
+   "new": "0x4020dca8"
   },
   "0x4020db60": {
    "how": "window",
@@ -625,9 +729,17 @@
    "how": "refs (9)",
    "new": "0x409bbc18"
   },
+  "0x4191e018": {
+   "how": "refs (9)",
+   "new": "0x4191f018"
+  },
   "0x4197b6b4": {
    "how": "refs (2)",
    "new": "0x4197c6b4"
+  },
+  "0x4197b77c": {
+   "how": "refs (1)",
+   "new": "0x4197c77c"
   },
   "0x4197c7fc": {
    "how": "refs (21)",
@@ -668,6 +780,22 @@
   "0x4199e47c": {
    "how": "refs (4)",
    "new": "0x4199f47c"
+  },
+  "0x4199f050": {
+   "how": "refs (3)",
+   "new": "0x419a0050"
+  },
+  "0x4199f85c": {
+   "how": "refs (1)",
+   "new": "0x419a085c"
+  },
+  "0x419a0068": {
+   "how": "refs (2)",
+   "new": "0x419a1068"
+  },
+  "0x419a02e8": {
+   "how": "refs (1)",
+   "new": "0x419a12e8"
   },
   "0x421f3e14": {
    "how": "by hand: the LFO values; every RAM address the code uses within 1 KB of it moved +0x1000",

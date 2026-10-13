@@ -20,7 +20,7 @@
 #                                          they hold no firmware bytes), with elemods/README.md; with
 #                                          STOCK154=your OS 1.54 file, the -os1.54 ones too
 #
-# Mods for build/all: digimono, digimacro (MACRO; needs digimono), digipoly, digiutils, digimatrix, digieq (this repo); digisophie, digislicer,
+# Mods for build/all: digimono, digimacro (MACRO; needs digimono), digipoly, digiutils, digimatrix, digieq, tonefx (this repo); digisophie, digislicer,
 # digifilter, digineighbor, digihealth (fetched by setup).
 # digisophie, digineighbor and digislicer are built for digichain (tools/chain_patch.py; CHAIN=0 builds
 # them as they are), so they combine with each other; digichain is added to a build that needs it.
@@ -191,7 +191,7 @@ cmd_build() {
     files+=("$(build_one core "$TOOLS/elekloader/mods/core")")
     for m in "${mods[@]}"; do
         case $m in
-            digichain) files+=("$(build_one "$m" "$ROOT/mods/$m")") ;;
+            digichain|tonefx) files+=("$(build_one "$m" "$ROOT/mods/$m")") ;;
             digisophie) files+=("$(build_one digisophie "$TOOLS/digisophie")") ;;
             digislicer) files+=("$(build_one digislicer "$TOOLS/digislicer")") ;;
             digifilter) files+=("$(build_one digifilter "$TOOLS/digifilter")") ;;
@@ -263,7 +263,7 @@ cmd_emutest() {
     say "every machine passed; recordings in $LOG/MONO_*.wav, screens in $LOG/png_*"
 }
 
-ELEMOD_ALL=(digimono digimacro digichain digiutils digimatrix digieq digipoly digisophie digislicer digifilter digineighbor digihealth)
+ELEMOD_ALL=(digimono digimacro digichain digiutils digimatrix digieq digipoly tonefx digisophie digislicer digifilter digineighbor digihealth)
 
 FETCHED=(elekloader digiemu digisophie digislicer digifilter digineighbor digihealth)
 
@@ -338,7 +338,7 @@ cmd_elemods() {   # every mod as an .elemod, in one folder, with which pairs com
     local ok=() m f
     for m in "${ELEMOD_ALL[@]}"; do
         case $m in
-            digichain) f=$(build_one "$m" "$ROOT/mods/$m") \
+            digichain|tonefx) f=$(build_one "$m" "$ROOT/mods/$m") \
                 || { echo "  $m: FAILED (see $LOG/build-$m.log)"; continue; } ;;
             digimono|digimacro|digiutils|digimatrix|digieq|digipoly)
                 PYTHONPATH=$TOOLS/elekloader python3 "$ROOT/tools/build_elemods.py" --stock "$STOCK" \
@@ -444,6 +444,7 @@ cmd_publish() {   # the latest elekloader and mods, then all of them into elemod
     for m in "${THEIRS[@]}"; do
         cp "$(ls "$TOOLS/$m"/LICENSE* | head -1)" "$dst/licenses/$m-LICENSE"
     done
+    cp "$ROOT/mods/tonefx/LICENSE" "$dst/licenses/tonefx-LICENSE"   # a port kept here, under its GPL
     core=$(basename "$(ls "$DEV/elemods"/core-*.elemod)" .elemod)
     elk=$(git -C "$TOOLS/elekloader" log -1 --format='%h, %cs')
     {
@@ -471,6 +472,10 @@ cmd_publish() {   # the latest elekloader and mods, then all of them into elemod
         echo "These are built here, unchanged in their code, from their authors' repositories at the commit named;"
         echo "their licenses are in \`licenses/\`, and the source of each build is that commit plus what the last"
         echo "column says (the tools named are in this repository). digi1_mods' own mods are under its license."
+        echo
+        echo "**Tone+FX** (\`tonefx\`) is a port kept in this repository (mods/tonefx): Digital Alchemy DSP's Tone+FX 3.2a"
+        echo "([DigiAlchemydsp/RingTone@0310695](https://github.com/DigiAlchemydsp/RingTone)), GPL-2.0-or-later"
+        echo "([text](licenses/tonefx-LICENSE)); its source is mods/tonefx, which marks what the port changed."
         echo
         echo "| mod | license | source | changed for this build |"
         echo "|---|---|---|---|"
