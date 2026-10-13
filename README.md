@@ -227,6 +227,8 @@ in the FUNC+SRC list
 `tools/dev.sh mods` (and the elekloader app's update button) also fetches and builds these, by other authors,
 from their own repositories, so one update brings everything: **digihealth** (FAST AUDIO, SYSTEM INFO CPU/DSP
 readout), **SOPHIE** (digisophie), **NEIGHBOR** (digineighbor), **DIGISLICER** (digislicer) and **DigiFilter**.
+SOPHIE is built with its render made about 18 % lighter, the same sound sample for sample
+(tools/patches/digisophie-render.patch, offered to its author; the build's version ends in "f").
 `COMPATIBILITY.txt`, written next to the `.elemod` files, says which pairs combine.
 
 ## Stand-alone builds

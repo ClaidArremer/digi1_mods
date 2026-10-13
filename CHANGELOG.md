@@ -3,6 +3,25 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## SOPHIE 1.1.13f: its render about 18 % lighter, the same sound (HW: not yet)
+- **SOPHIE** (soejrd/digisophie, MIT) is built with tools/patches/digisophie-render.patch, offered to its
+  author once tested on a unit; the build's version is 1.1.13f (elemods: digisophie-1.1.13f-chain*).
+  - Its render loop keeps the voice's state in the CPU's registers for the block: the track buffer is
+    `int32_t` like most of the voice's fields, so the compiler reloaded and stored each one around every
+    output sample.
+  - The soft clip and the FM index conversion are inlined; the index's full-depth multiply
+    (`mod * 32767 >> 15`) is the exact `mod - (mod > 0)`.
+  - Estimated on the ColdFire build, a voice's block: FUSE 8,500 -> 6,900 cycles (-19 %), BOOM -18 %,
+    PIPE -19 %, SHARD 10,000 -> 8,300 (-17 %). 0.8 KB more code.
+  - Fix: its digitakt.c built only with m68k-elf (its `s32` was `long`, which m68k-linux-gnu's `int32_t`
+    is not): now `int32_t`, for any m68k GCC.
+- Checked (tests/sophie_fast.py): 40,000 random blocks (every model, moving controls, SWEEP, re-triggers,
+  the AMP gate's sleep and wake, FOLD, odd block lengths) give every sample and the whole voice state as
+  before; its own `make test` passes. digiemu, OS 1.54, core 3.0 + digichain + SOPHIE: the voice's blocks
+  and the output while playing and turning its knobs equal the unpatched build's.
+- tools/dev.sh applies the patch to the copy it builds and adds the "f"; once upstream has it, the patch no
+  longer applies and SOPHIE is built as fetched.
+
 ## Tone+FX 3.2a3: no boot splash; Tone+FX in this repository (HW: not yet)
 - **No boot splash:** the unit starts with its own intro. The splash's code (mods/tonefx/render.c, splash.s)
   stays in the folder, not built; its seven sites on the intro's presents are gone, and the delay line

@@ -158,6 +158,22 @@ build_one() {   # build_one NAME SOURCEDIR -> echo the .elemod
         python3 "$ROOT/tools/port_os.py" apply --new "$STOCK" --elekloader "$TOOLS/elekloader" --mods "$stage" \
             > "$LOG/port-$1.log" 2>&1 || die "$1 could not be ported to OS 1.54: $LOG/port-$1.log"
     fi
+    if [[ $1 == digisophie && -f $ROOT/tools/patches/digisophie-render.patch ]]; then
+        # SOPHIE's render made lighter, the same output (tools/patches; offered upstream): its version
+        # gets an "f" so the unit and elekloader show which one is built
+        local sp=$ROOT/tools/patches/digisophie-render.patch
+        if patch -p1 -s -f --dry-run -d "$stage" < "$sp" > /dev/null 2>&1; then
+            patch -p1 -s -f -d "$stage" < "$sp"
+            python3 - "$stage/mod.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+d["version"] += "f"
+json.dump(d, open(sys.argv[1], "w"), indent=1)
+PY
+        else
+            echo "  digisophie: tools/patches/digisophie-render.patch does not apply (upstream has it, or changed): built as fetched" >&2
+        fi
+    fi
     case $1 in
         digisophie|digineighbor|digislicer)   # their shared sites go to digichain (tools/chain_patch.py)
             if [[ ${CHAIN:-1} != 0 ]]; then
@@ -411,7 +427,7 @@ PUBLISHED=("${ELEMOD_ALL[@]}")
 THEIRS=(digisophie digislicer digineighbor digifilter digihealth)
 origin() {
     case $1 in
-        digisophie) echo "$DIGISOPHIE_URL|the sites digichain owns moved to it (tools/chain_patch.py); OS 1.54: ported by tools/port_os.py" ;;
+        digisophie) echo "$DIGISOPHIE_URL|its render made lighter, the same output (tools/patches/digisophie-render.patch); the sites digichain owns moved to it (tools/chain_patch.py)" ;;
         digislicer) echo "$DIGISLICER_URL|the sites digichain owns moved to it (tools/chain_patch.py)" ;;
         digineighbor) echo "$DIGINEIGHBOR_URL|the sites digichain owns moved to it (tools/chain_patch.py)" ;;
         digifilter) echo "$DIGIFILTER_URL|OS 1.54: ported by tools/port_os.py" ;;
@@ -469,7 +485,7 @@ cmd_publish() {   # the latest elekloader and mods, then all of them into elemod
         echo
         echo "## The other authors' mods"
         echo
-        echo "These are built here, unchanged in their code, from their authors' repositories at the commit named;"
+        echo "These are built here from their authors' repositories at the commit named, their code unchanged but for what the last column says;"
         echo "their licenses are in \`licenses/\`, and the source of each build is that commit plus what the last"
         echo "column says (the tools named are in this repository). digi1_mods' own mods are under its license."
         echo

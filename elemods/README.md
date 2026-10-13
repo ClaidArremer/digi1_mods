@@ -28,8 +28,8 @@ and Digi Macro (MACRO) ticks Digi Mono.
 | `digipoly-2.0a.elemod` | `7ddeefb4616e27e6` |
 | `digislicer-2.1-chain-os1.54.elemod` | `122c976f80179c9d` |
 | `digislicer-2.1-chain.elemod` | `456b4adc4dd32e2e` |
-| `digisophie-1.1.13-chain-os1.54.elemod` | `c035eec552d56628` |
-| `digisophie-1.1.13-chain.elemod` | `b584c1e3884dc239` |
+| `digisophie-1.1.13f-chain-os1.54.elemod` | `1fee4d81547c2ec6` |
+| `digisophie-1.1.13f-chain.elemod` | `f3cf33196b26e901` |
 | `digiutils-1.9a-os1.54.elemod` | `ed13ca17753e4885` |
 | `digiutils-1.9a.elemod` | `8697ac1fe883cb8f` |
 | `tonefx-3.2a3-os1.54.elemod` | `c490c6f22fcdd727` |
@@ -43,7 +43,7 @@ it patches are there only to check your file. No firmware is stored here.
 
 ## The other authors' mods
 
-These are built here, unchanged in their code, from their authors' repositories at the commit named;
+These are built here from their authors' repositories at the commit named, their code unchanged but for what the last column says;
 their licenses are in `licenses/`, and the source of each build is that commit plus what the last
 column says (the tools named are in this repository). digi1_mods' own mods are under its license.
 
@@ -53,7 +53,7 @@ column says (the tools named are in this repository). digi1_mods' own mods are u
 
 | mod | license | source | changed for this build |
 |---|---|---|---|
-| digisophie | MIT ([text](licenses/digisophie-LICENSE)) | [soejrd/digisophie@961c39c](https://github.com/soejrd/digisophie/tree/961c39cec699e8f8940391634aaba9fad7120792) | the sites digichain owns moved to it (tools/chain_patch.py); OS 1.54: ported by tools/port_os.py |
+| digisophie | MIT ([text](licenses/digisophie-LICENSE)) | [soejrd/digisophie@ce17b9e](https://github.com/soejrd/digisophie/tree/ce17b9e) | its render made lighter, the same output (tools/patches/digisophie-render.patch: version 1.1.13f); the sites digichain owns moved to it (tools/chain_patch.py) |
 | digislicer | GPL-2.0-or-later ([text](licenses/digislicer-LICENSE)) | [irpina/digislicer@ac0c46d](https://github.com/irpina/digislicer/tree/ac0c46d8607205352adcd0f49fb09a4736edda17) | the sites digichain owns moved to it (tools/chain_patch.py) |
 | digineighbor | GPL-2.0-or-later ([text](licenses/digineighbor-LICENSE)) | [irpina/digineighbor@d09574a](https://github.com/irpina/digineighbor/tree/d09574ab5fac8c079849e74c5c3efe129de54126) | the sites digichain owns moved to it (tools/chain_patch.py) |
 | digifilter | GPL-2.0-or-later ([text](licenses/digifilter-LICENSE)) | [DigiAlchemydsp/DigiFilter@709f4af](https://github.com/DigiAlchemydsp/DigiFilter/tree/709f4af76d9a93fe58ae525aecf0447cd39dbdd1) | OS 1.54: ported by tools/port_os.py |
