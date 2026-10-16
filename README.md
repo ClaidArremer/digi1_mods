@@ -43,8 +43,9 @@ your OS file from your own official one.
 
 | mod | what it adds | version | hardware |
 |---|---|---|---|
-| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN and CHORDS | 0.23 | **confirmed** (0.22) |
+| [Digi Mono](#digi-mono) (`digimono`) | synth machines: MONO SIN, NOISE, SAW, PULSE, ENS, VO, POLY SIN and CHORDS | 0.23.1 | **confirmed** (0.22) |
 | [Digi Macro](#digi-macro) (`digimacro`) | MACRO: Plaits' engines as a machine (needs Digi Mono) | 1.1 | **confirmed**: no freezes (1.0 with Digi Mono 0.22) |
+| [DH-101](#dh-101) (`digi101`) | an SH-101-style monosynth machine with the 101's filter and glide (needs Digi Mono) | 0.22 | **confirmed** (OS 1.54) |
 | [Digi Matrix](#digi-matrix) (`digimatrix`) | an LFO modulation matrix, 8 cross-track slots | 1.0c | **confirmed** |
 | [Digi Utilities](#digi-utilities) (`digiutils`) | waveform, spectrum and X-Y pages, tuner, track activity | 1.9a | **confirmed** |
 | [Digi EQ](#digi-eq) (`digieq`) | a 4-band master EQ on every output | 1.0c | **confirmed** |
@@ -75,7 +76,7 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
 
 ## Digi Mono
 
-**Digi Mono** (elekloader mod `digimono`, 0.23, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and CHORDS
+**Digi Mono** (elekloader mod `digimono`, 0.23.1, needs core 2.1 and digichain 1.6) - seven synth machines after the Monomachine, and CHORDS
 - **Seven new machines in the FUNC+SRC list**, each with its own icon: **MONO SIN**, **MONO NOISE** (sample and
   hold, red noise), **MONO SAW** (unison, two sub-oscillators), **MONO PULSE** (PWM, unison, subs), **MONO ENS**
   (four oscillators at set intervals, saw to pulse, chorus), **MONO VO** (a formant voice: vowel to vowel,
@@ -120,6 +121,20 @@ pattern is renamed "DEMO". Only screenshots are published here - no firmware, an
   [mods/digimacro/MACRO.md](mods/digimacro/MACRO.md).
 - **Why a mod of its own:** a build without MACRO saves its 32 KB of code. MACRO was part of Digi Mono
   up to 0.21; its sounds keep their machine (27) and knobs.
+
+## DH-101
+
+**DH-101** (elekloader mod `digi101`, 0.22, needs Digi Mono 0.23.1, which elekloader ticks with it) - an
+SH-101-style monosynth, by Robbie
+- **DH-101** in the FUNC+SRC list: the 101's oscillator (saw, pulse with PWM by hand, LFO or envelope,
+  sub-oscillator in three modes, noise) on the SRC page, all from one oscillator so they stay locked.
+- **Press SRC again** for its own page: PORT (the 101's glide, per track) and the 101's 4-pole resonant
+  filter (FREQ, RESO up to self-oscillation, ENV from the AMP envelope, MOD, KYB, VIB, RATE), before the
+  track's own FLTR. Stock knob graphics and pop-ups; saved with the sound.
+- **The LFOs** reach Filter Freq, Filter Reso and PWM Source (OS 1.54).
+- A clean-room engine, the filter calibrated against TAL-BassLine-101 recordings. Tested on a unit (OS 1.54):
+  three tracks with the filter running play without gaps with FAST AUDIO. Details:
+  [mods/digi101/README.md](mods/digi101/README.md).
 
 ## Digi Matrix
 

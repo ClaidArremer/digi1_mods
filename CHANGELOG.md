@@ -3,6 +3,21 @@
 "Unit shows" = the version string displayed on the unit. HW = tested on real hardware by the owner.
 All builds change only the MAIN OS section; bootloader, updater, I/O firmware and metadata stay official.
 
+## DH-101 0.22 (new mod) and Digi Mono 0.23.1 (HW: DH-101 0.22 on OS 1.54, with Digi Mono 0.23.1)
+- **New mod `digi101`** (mods/digi101, its README): DH-101, an SH-101-style machine Digi Mono hosts
+  (machine 29). SRC page: RNGE, SAW, NOIS, PULS, PW, PWM (MAN / LFO / ENV), SUB. SRC again: PORT and the
+  101 filter (FREQ RESO ENV MOD KYB VIB RATE), saved in sound slots 46 and 47 (glue.s makes the firmware
+  save and load them), PORT in free bytes of src/kitstore.h's map. OS 1.54: the LFO page lists Filter Freq,
+  Filter Reso and PWM Source on its tracks; TRK + a trig shows "DH-101".
+- **Digi Mono 0.23.1**: a hosted machine can name its own LFO destinations: the collection
+  `digimono_dests` (mods/digimono/digimono_ext.h, `struct digimono_dest_ext`); `digimono_dest` asks it
+  first, a null name keeps Digi Mono's. Nothing else changes; Digi Macro's copy of the header follows, and
+  tools/build_elemods.py checks DH-101's too.
+- tools/build_elemods.py and tools/dev.sh build `digi101` with the others.
+- Checked: tests/digi101_page.c (74 checks), tests/digi101_vcf.py, tests/digi101_hooks_fw.py on OS 1.54,
+  tests/digi101_engine.py; elekloader --check with core, digichain, Digi Mono and Digi Macro. The OS 1.53
+  build is not tested.
+
 ## SOPHIE 1.1.13f: its render about 18 % lighter, the same sound (HW: not yet)
 - **SOPHIE** (soejrd/digisophie, MIT) is built with tools/patches/digisophie-render.patch, offered to its
   author once tested on a unit; the build's version is 1.1.13f (elemods: digisophie-1.1.13f-chain*).

@@ -20,7 +20,7 @@
 #                                          they hold no firmware bytes), with elemods/README.md; with
 #                                          STOCK154=your OS 1.54 file, the -os1.54 ones too
 #
-# Mods for build/all: digimono, digimacro (MACRO; needs digimono), digipoly, digiutils, digimatrix, digieq, tonefx (this repo); digisophie, digislicer,
+# Mods for build/all: digimono, digimacro (MACRO; needs digimono), digi101 (DH-101; needs digimono), digipoly, digiutils, digimatrix, digieq, tonefx (this repo); digisophie, digislicer,
 # digifilter, digineighbor, digihealth (fetched by setup).
 # digisophie, digineighbor and digislicer are built for digichain (tools/chain_patch.py; CHAIN=0 builds
 # them as they are), so they combine with each other; digichain is added to a build that needs it.
@@ -213,7 +213,7 @@ cmd_build() {
             digifilter) files+=("$(build_one digifilter "$TOOLS/digifilter")") ;;
             digineighbor) files+=("$(build_one digineighbor "$TOOLS/digineighbor")") ;;
             digihealth) files+=("$(build_one digihealth "$TOOLS/digihealth")") ;;
-            digimono|digimacro|digiutils|digimatrix|digieq|digipoly)
+            digimono|digimacro|digi101|digiutils|digimatrix|digieq|digipoly)
                 PYTHONPATH=$TOOLS/elekloader python3 "$ROOT/tools/build_elemods.py" --stock "$STOCK" \
                     --elekloader "$TOOLS/elekloader" --out "$BUILD/mods" --mods "$m" > "$LOG/build-$m.log" 2>&1 \
                     || die "$m failed to build: $LOG/build-$m.log"
@@ -279,7 +279,7 @@ cmd_emutest() {
     say "every machine passed; recordings in $LOG/MONO_*.wav, screens in $LOG/png_*"
 }
 
-ELEMOD_ALL=(digimono digimacro digichain digiutils digimatrix digieq digipoly tonefx digisophie digislicer digifilter digineighbor digihealth)
+ELEMOD_ALL=(digimono digimacro digi101 digichain digiutils digimatrix digieq digipoly tonefx digisophie digislicer digifilter digineighbor digihealth)
 
 FETCHED=(elekloader digiemu digisophie digislicer digifilter digineighbor digihealth)
 
@@ -356,7 +356,7 @@ cmd_elemods() {   # every mod as an .elemod, in one folder, with which pairs com
         case $m in
             digichain|tonefx) f=$(build_one "$m" "$ROOT/mods/$m") \
                 || { echo "  $m: FAILED (see $LOG/build-$m.log)"; continue; } ;;
-            digimono|digimacro|digiutils|digimatrix|digieq|digipoly)
+            digimono|digimacro|digi101|digiutils|digimatrix|digieq|digipoly)
                 PYTHONPATH=$TOOLS/elekloader python3 "$ROOT/tools/build_elemods.py" --stock "$STOCK" \
                     --elekloader "$TOOLS/elekloader" --out "$BUILD/mods" --mods "$m" > "$LOG/build-$m.log" 2>&1 \
                     || { echo "  $m: FAILED (see $LOG/build-$m.log)"; continue; }
@@ -375,7 +375,7 @@ cmd_elemods() {   # every mod as an .elemod, in one folder, with which pairs com
         for ((j = i + 1; j < ${#ok[@]}; j++)); do
             a=${ok[i]}; b=${ok[j]}
             with=(--mod "$core")
-            if [[ -n $chain && ( $a$b == *-chain.elemod* || $a$b == *-chain-os* || $a$b == */digimono-* || $a$b == */digipoly-* || $a$b == */digimacro-* ) && $a != "$chain" && $b != "$chain" ]]; then
+            if [[ -n $chain && ( $a$b == *-chain.elemod* || $a$b == *-chain-os* || $a$b == */digimono-* || $a$b == */digipoly-* || $a$b == */digimacro-* || $a$b == */digi101-* ) && $a != "$chain" && $b != "$chain" ]]; then
                 with+=(--mod "$chain")
             fi
             local r   # the mods a or b require (Digi Macro: Digi Mono), from this folder

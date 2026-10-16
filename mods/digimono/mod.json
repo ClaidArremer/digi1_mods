@@ -1,11 +1,11 @@
 {
  "id": "digimono",
- "version": "0.23",
+ "version": "0.23.1",
  "title": "Digi Mono",
  "category": "Sound",
  "author": "gdeo607",
  "license": "MIT",
- "description": "Synth machines for the audio tracks, after the Monomachine's GND and SWAVE machines: MONO SIN, MONO NOISE, MONO SAW (unison, two sub-oscillators), MONO PULSE (PWM, unison, sub), MONO ENS (four oscillators at set intervals, chorus), MONO VO (a formant voice: vowel to vowel, consonants), POLY SIN (three sines at set notes, a pitch envelope) and CHORDS (four oscillators as a chord: 24 chord types, inversion, spread; sines, or ENS's saw to pulse and chorus), in the FUNC+SRC machine list. They need no sample; the track's filter, amp, LFOs and effects work on them as on a sample. The Monomachine-style machines are a clean-room engine (no Monomachine code or data). Digi Macro adds MACRO (Plaits' engines) to the same list, rendered by Digi Mono. The SRC page shows each machine's own knobs (B, C, E, F, G, H); A is TUNE, D the (unused) sample slot. Needs digichain 1.6 or later, which elekloader ticks with it.",
+ "description": "Synth machines for the audio tracks, after the Monomachine's GND and SWAVE machines: MONO SIN, MONO NOISE, MONO SAW (unison, two sub-oscillators), MONO PULSE (PWM, unison, sub), MONO ENS (four oscillators at set intervals, chorus), MONO VO (a formant voice: vowel to vowel, consonants), POLY SIN (three sines at set notes, a pitch envelope) and CHORDS (four oscillators as a chord: 24 chord types, inversion, spread; sines, or ENS's saw to pulse and chorus), in the FUNC+SRC machine list. They need no sample; the track's filter, amp, LFOs and effects work on them as on a sample. The Monomachine-style machines are a clean-room engine (no Monomachine code or data). Digi Macro adds MACRO (Plaits' engines) to the same list, rendered by Digi Mono. The SRC page shows each machine's own knobs (B, C, E, F, G, H); A is TUNE, D the (unused) sample slot. Needs digichain 1.6 or later, which elekloader ticks with it. 0.23.1: a hosted machine can name its LFO destinations (collection digimono_dests; DH-101 uses it).",
  "device": "digitakt-mk1",
  "os": "1.53",
  "sources": [
@@ -195,7 +195,8 @@
   }
  ],
  "collections": {
-  "digimono_ext": 4
+  "digimono_ext": 4,
+  "digimono_dests": 4
  },
  "requires": [
   "core",

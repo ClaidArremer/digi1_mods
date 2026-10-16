@@ -47,4 +47,17 @@ extern uint8_t digimono_eco;
 /* the collection: pointers to the machines' structs, a null one last (elekloader adds it) */
 extern const struct digimono_ext *const digimono_ext[];
 
+/* A hosted machine's own names for LFO destinations (0.23.1): parameter ids first..first + n - 1 on
+ * its tracks (its SRC knobs' ids 108..115, or more ids it makes the firmware list) are shown as
+ * "<mshort>:<lname>" in the LFO page's list and <sname> in the DEST box. A null name leaves that id as
+ * Digi Mono names it (a knob as on the SRC page). Registered in Digi Mono's collection digimono_dests. */
+struct digimono_dest_ext {
+    uint32_t id;                                    /* the machine id (as digimono_ext's)              */
+    uint32_t first;                                 /* the first parameter id named                    */
+    uint32_t n;                                     /* how many                                        */
+    const char *const *lname;                       /* [n] long names (null: Digi Mono's)              */
+    const char *const *sname;                       /* [n] short names (null: Digi Mono's)             */
+};
+extern const struct digimono_dest_ext *const digimono_dests[];
+
 #endif

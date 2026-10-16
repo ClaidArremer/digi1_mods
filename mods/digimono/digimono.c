@@ -391,7 +391,22 @@ const char *digimono_dest(uint32_t off, int what, const char *stock)
     int k, j;
     for (k = 0; k < 8 && off != (uint32_t)(ONESHOT_ID_A + k) * 52; k++)
         ;
-    if (!active_model(&ki) || k == 8)
+    if (!active_model(&ki))
+        return stock;
+    if (ki.x) {                                 /* a hosted machine's own destination names (0.23.1) */
+        const struct digimono_dest_ext *const *e;
+        uint32_t id = off / 52;
+        for (e = digimono_dests; *e; e++)
+            if ((*e)->id == ki.x->id && id >= (*e)->first && id < (*e)->first + (*e)->n) {
+                const char *n = what == 1 ? (*e)->lname[id - (*e)->first] : (*e)->sname[id - (*e)->first];
+                if (what == 0)
+                    return ki.x->mshort;
+                if (n)
+                    return n;
+                break;                          /* none given: as any knob's */
+            }
+    }
+    if (k == 8)
         return stock;
     if (what == 0)
         return ki.x ? ki.x->mshort : mach_short[ki.m];
