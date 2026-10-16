@@ -321,7 +321,7 @@ static uint32_t glide(struct sh101_voice *v, uint32_t inc)
  * stage v = G (in - s), y = v + s, s = y + v, G = g / (1 + g), g = tan(pi fc / fs); the four stages and the
  * feedback u = x - k y4 are solved for y4 exactly each sample (y4 = (G^4 x + S) / (1 + k G^4), S the
  * stages' carried state), so the cutoff stays in tune to 20 kHz without oversampling. Its scale, the
- * resonance k and the bass it loses were fitted to TAL-BassLine-101 recordings (tools/gen_tables.py):
+ * resonance k and the bass it loses were fitted to TAL-BassLine-101 recordings (tools/gen_digi101_tables.py):
  * output gain 1 + 0.42 k keeps about as much bass as TAL. The feedback k y4 is soft-limited (from 0.625 of
  * full scale), as the 101's resonance saturates inside its loop: self-oscillation (RES above 120) settles
  * at about -6 dBFS, clean, and loud inputs tame the resonance as on the hardware. Signals inside are Q26. */

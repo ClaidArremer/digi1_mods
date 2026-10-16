@@ -3,7 +3,13 @@
  * knobs; this mod brings the engine (sh101.c), its state and the knobs' names.
  *
  * Two registrations: the machine list entry (core 2.1's core_machines: id 29, DH-101, its icon; ONESHOT's
- * params and render, as Digi Mono's machines) and the engine (Digi Mono's collection digimono_ext). */
+ * params and render, as Digi Mono's machines) and the engine (Digi Mono's collection digimono_ext).
+ *
+ * Parts follow Digi Mono and Digi Macro (gdeo607/digi1_mods, MIT): the machine's registration and icon
+ * (digimacro.c), the SRC knobs' defaults on a clear (digimono.c, digimono_tick), and the per-pattern map
+ * (src/kitstore.h). Firmware addresses come from digi1_mods' notes (docs/TECHNICAL_NOTES.md, tools/os154.json)
+ * and this mod's own study of OS 1.54; no firmware code is included beyond the few instructions a hook
+ * replaces and replays (glue.s). */
 #if defined(HOST_TEST)
 #include "../../tests/digi101_host_fw.h"              /* the desktop test's stand-ins for the firmware */
 #elif defined(OS154)
@@ -256,7 +262,7 @@ void digi101_tick(void *ctrl)
  * tracks 1..4 only, so those of tracks 5..8 (28 29 34 35 40 41 46 47) are free: one byte a track, here
  * bits 0..6 PORT and bit 7 kept for LEG. Track t (5..8) keeps its byte in its own sound (6t+4), track t
  * (1..4) in track t+4's (6(t+4)+5). 0, what every existing kit holds, is PORT off. As the other mods, a
- * RAM-only marker slot (48, unused by the other mods; 0.8/0.9 used 46) tells a sound load from a kit load, so loading a
+ * RAM-only marker slot (48, unused by the other mods) tells a sound load from a kit load, so loading a
  * sound onto a track keeps every track's PORT. */
 #include "kitstore.h"
 #define KS_SLOT_D101 48                  /* RAM-only (46 and 47 are saved now: glue.s) */

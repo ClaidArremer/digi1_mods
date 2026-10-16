@@ -60,15 +60,11 @@ own. Range and Pulse Width are not destinations, nor are PORT, ENV, MOD, KYB, VI
 - The names come through Digi Mono 0.23.1's collection `digimono_dests` (mods/digimono/digimono_ext.h), through
   which a hosted machine renames its destinations (a null name keeps Digi Mono's). DH-101 contributes to
   it, so it needs Digi Mono 0.23.1 or later to build.
-- 0.20 listed page 2 at the end of the list as slots 46..52 (saved as 0x60..0x66), and the list's cursor
-  stuck past AMP:Volume. Those are gone; a sound saved by 0.20 loads FREQ / RESO as the new ones and the
-  other five as none.
 
 The filter is a 4-pole ladder after the 101's VCF (clean-room, calibrated by ear and measurement against
 TAL-BassLine-101): it comes before the track's own FLTR page, which can filter it further. Its seven
 settings are part of the sound (parameter slots 46 and 47, which `glue.s` makes the firmware save and
-load), so they go with the sound into kits, the project and the sound pool. Sounds made before 0.11 load
-with the filter open. They cannot be p-locked (the LFOs can reach FREQ and RESO: above).
+load), so they go with the sound into kits, the project and the sound pool. They cannot be p-locked (the LFOs can reach FREQ and RESO: above).
 
 The glide is the 101's: an exponential slide in pitch, the same up and down; only note changes glide.
 PORT is kept in free bytes of the mods' persistent kit map (digi1_mods `src/kitstore.h`: bytes 28 29 34
@@ -107,7 +103,7 @@ with the filter running play without gaps.
 | `tests/digi101_vcf.py`, `digi101_vcf_stub.s` | vcf.s against sh101.c in Unicorn's ColdFire V4e, within 1 LSB |
 | `tests/digi101_hooks_fw.py` | the hooks and Digi Mono's names, linked into the real OS 1.54 and run in Unicorn |
 | `tests/digi101_engine.py` | the engine's behaviour through the desktop renderer |
-| `tools/gen_digi101_tables.py`, `digi101_render.c`, `digi101_demos.py` | the tables, a WAV renderer, audition files |
+| `tools/gen_digi101_tables.py`, `digi101_render.c` | the tables; a desktop renderer (the engine to a WAV, for `tests/digi101_engine.py`) |
 
 ## Build and test
 
@@ -126,3 +122,8 @@ band-limiting method (polyBLEP "ramps") and the per-pattern storage follow Digi 
 gdeo607 (MIT). The filter was calibrated by ear and measurement against recordings of TAL-BassLine-101 (no
 code from it); its design follows Vadim Zavalishin's and Andrew Simper's public papers on zero-delay-feedback
 filters. Clean-room: no Elektron, Roland or plug-in code.
+
+**Trademarks.** Roland and SH-101 are trademarks of Roland Corporation; Elektron and Digitakt of Elektron
+Music Machines; TAL-BassLine-101 is a product of TAL Software GmbH. DH-101 is not affiliated with or
+endorsed by any of them: the names say what it was modelled on. No code, samples or data from them is
+included (TAL-BassLine-101 was only listened to and measured, from recordings that are not part of this).
